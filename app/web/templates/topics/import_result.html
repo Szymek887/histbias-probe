@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Import finished</h1>
+<ul>
+  <li>Topics added: {{ result.topics_added }}</li>
+  <li>Topics updated: {{ result.topics_updated }}</li>
+  <li>Topics skipped (already exist): {{ result.topics_skipped }}</li>
+  <li>Topics unchanged: {{ result.topics_unchanged }}</li>
+  <li>Countries added: {{ result.countries_added }}</li>
+  <li>Countries updated: {{ result.countries_updated }}</li>
+</ul>
+<p><a href="/topics" role="button">Go to topics</a></p>
+{% endblock %}

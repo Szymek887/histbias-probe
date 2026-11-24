@@ -1,0 +1,31 @@
+<p><small>{{ rows|length }} topic{{ "" if rows|length == 1 else "s" }}{% if filters.archived %} (archived){% endif %}</small></p>
+{% if rows %}
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th scope="col"><span class="visually-hidden">Select</span></th>
+      <th scope="col">Title</th>
+      <th scope="col">Countries</th>
+      <th scope="col">Era</th>
+      <th scope="col">Type</th>
+      <th scope="col">Langs</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td><input type="checkbox" name="ids" value="{{ r.topic.id }}" form="topic-selection" aria-label="Select {{ r.topic.title }}"></td>
+      <td><a href="/topics/{{ r.topic.id }}">{{ r.topic.title }}</a></td>
+      <td>{{ r.countries|join(" · ") }}</td>
+      <td>{{ era_labels.get(r.topic.era, r.topic.era) }}</td>
+      <td>{{ "cc" if r.topic.type == "criss_cross" else "int" }}</td>
+      <td>{{ r.languages|join(", ") }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty-state">No topics match. {% if not filters.archived %}<a href="/topics/new">Add a topic</a> or <a href="/topics/import">import a YAML file</a>.{% endif %}</p>
+{% endif %}

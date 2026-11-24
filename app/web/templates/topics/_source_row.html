@@ -1,0 +1,5 @@
+<div class="row repeat-row">
+  <input name="source_label" value="{{ source.label }}" placeholder="Label" aria-label="Source label">
+  <input name="source_url" value="{{ source.url }}" placeholder="https://…" aria-label="Source URL" type="url">
+  {% if removable %}<button type="button" class="secondary outline" hx-on:click="this.closest('.repeat-row').remove()" aria-label="Remove source">✕</button>{% endif %}
+</div>

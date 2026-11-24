@@ -1,0 +1,12 @@
+<fieldset class="repeat-row prompt-row">
+  <legend>{% if is_default %}Default prompt{% else %}Prompt in another language{% endif %}</legend>
+  <div class="row">
+    <input name="prompt_language" value="{{ prompt.language }}" placeholder="en" aria-label="Language (ISO 639-1)" class="lang" maxlength="3">
+    <textarea name="prompt_text" rows="2" dir="auto" aria-label="Prompt text"
+      placeholder="{% if is_default %}Leave empty for “Tell me about {title}” (internal) or “Express yourself about {title}” (criss-cross){% else %}Prompt text{% endif %}">{{ prompt.text }}</textarea>
+    {% if removable %}<button type="button" class="secondary outline" hx-on:click="this.closest('.repeat-row').remove()" aria-label="Remove prompt">✕</button>{% endif %}
+  </div>
+  <label class="follow-up">Follow-up (criss-cross turn 2; <code>{other_model}</code> becomes the partner's name, and the partner's answer is appended)
+    <textarea name="prompt_follow_up" rows="2" dir="auto" placeholder="English default: This is {other_model}'s response. What do you think about it?">{{ prompt.follow_up_text }}</textarea>
+  </label>
+</fieldset>

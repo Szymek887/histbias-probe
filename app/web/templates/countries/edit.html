@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, errors_box with context %}
+{% block content %}
+<h1>Edit country {{ country.code }}</h1>
+{{ errors_box(errors) }}
+<form method="post" action="/countries/{{ country.code }}/edit">
+  {{ csrf() }}
+  <label>Name <input name="name" value="{{ values.name }}" required></label>
+  <label>Native language (ISO 639-1) <input name="native_language" value="{{ values.native_language }}" required maxlength="3" class="lang"></label>
+  <button type="submit">Save</button>
+  <a href="/countries">Cancel</a>
+</form>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, errors_box with context %}
+{% block content %}
+<hgroup>
+  <h1>Countries</h1>
+  <p>Countries group topics and models. The native language is the default language for native-language prompts.</p>
+</hgroup>
+<table>
+  <thead><tr><th>Code</th><th>Name</th><th>Native language</th><th>Topics</th><th></th></tr></thead>
+  <tbody>
+    {% for c in countries %}
+    <tr>
+      <td>{{ c.code }}</td><td>{{ c.name }}</td><td>{{ c.native_language }}</td>
+      <td><a href="/topics?country={{ c.code }}">{{ topic_counts.get(c.code, 0) }}</a></td>
+      <td><a href="/countries/{{ c.code }}/edit">Edit</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="empty-state">No countries yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>Add country</h2>
+{{ errors_box(errors) }}
+<form method="post" action="/countries">
+  {{ csrf() }}
+  <div class="row">
+    <label>Code <input name="code" value="{{ values.get('code', '') }}" placeholder="UA" required maxlength="10"></label>
+    <label>Name <input name="name" value="{{ values.get('name', '') }}" placeholder="Ukraine" required></label>
+    <label>Native language <input name="native_language" value="{{ values.get('native_language', '') }}" placeholder="uk" required maxlength="3" class="lang"></label>
+  </div>
+  <button type="submit">Add country</button>
+</form>
+<p><a href="/topics">Back to topics</a></p>
+{% endblock %}

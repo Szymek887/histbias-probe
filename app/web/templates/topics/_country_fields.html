@@ -1,0 +1,26 @@
+<div id="country-fields">
+  <div class="row">
+    <label>Country
+      <select name="country_1" required>
+        <option value="">Choose…</option>
+        {% for c in countries %}<option value="{{ c.code }}"{% if c.code == form.country_1 %} selected{% endif %}>{{ c.name }} ({{ c.code }})</option>{% endfor %}
+      </select>
+    </label>
+    <label>Second country <small>(criss-cross only)</small>
+      <select name="country_2">
+        <option value="">—</option>
+        {% for c in countries %}<option value="{{ c.code }}"{% if c.code == form.country_2 %} selected{% endif %}>{{ c.name }} ({{ c.code }})</option>{% endfor %}
+      </select>
+    </label>
+  </div>
+  <details{% if country_error %} open{% endif %}>
+    <summary>+ Add country</summary>
+    {% if country_error %}<p class="field-error" role="alert">{{ country_error }}</p>{% endif %}
+    <div class="row">
+      <input name="new_country_code" placeholder="Code, e.g. UA" aria-label="New country code" value="{{ (new_country or {}).get('new_country_code', '') }}">
+      <input name="new_country_name" placeholder="Name, e.g. Ukraine" aria-label="New country name" value="{{ (new_country or {}).get('new_country_name', '') }}">
+      <input name="new_country_language" placeholder="Native language, e.g. uk" aria-label="New country native language" class="lang" value="{{ (new_country or {}).get('new_country_language', '') }}">
+      <button type="button" class="secondary" hx-post="/topics/_country" hx-target="#country-fields" hx-swap="outerHTML">Add</button>
+    </div>
+  </details>
+</div>

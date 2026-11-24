@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, errors_box with context %}
+{% block content %}
+<h1>Import preview</h1>
+<p><code>{{ filename }}</code></p>
+{% if preview.errors %}
+{{ errors_box(preview.errors) }}
+<p>Nothing was imported. Fix the file and <a href="/topics/import">upload it again</a>.</p>
+{% else %}
+<p>
+  Topics: <strong>{{ preview.count("topics", Status.NEW) }}</strong> new,
+  <strong>{{ preview.count("topics", Status.CHANGED) }}</strong> changed,
+  <strong>{{ preview.count("topics", Status.UNCHANGED) }}</strong> unchanged.
+  Countries: {{ preview.count("countries", Status.NEW) }} new,
+  {{ preview.count("countries", Status.CHANGED) }} changed.
+</p>
+<form method="post" action="/topics/import/confirm">
+  {{ csrf() }}
+  <input type="hidden" name="token" value="{{ token }}">
+  <fieldset>
+    <legend>Topics and countries that already exist (matched by slug / code):</legend>
+    <label><input type="radio" name="mode" value="skip" checked> Skip existing: only add new ones</label>
+    <label><input type="radio" name="mode" value="overwrite"> Overwrite existing with the file's version</label>
+  </fieldset>
+  <button type="submit">Import</button>
+  <a href="/topics/import">Cancel</a>
+</form>
+{% endif %}
+
+{% if preview.countries %}
+<h2>Countries</h2>
+<table>
+  <thead><tr><th>Code</th><th>Name</th><th>Language</th><th>Status</th></tr></thead>
+  <tbody>{% for c in preview.countries %}<tr><td>{{ c.data.code }}</td><td>{{ c.data.name }}</td><td>{{ c.data.native_language }}</td><td>{{ c.status.value }}</td></tr>{% endfor %}</tbody>
+</table>
+{% endif %}
+
+{% if preview.topics %}
+<h2>Topics</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Status</th><th>Title</th><th>Slug</th><th>Changed fields</th></tr></thead>
+  <tbody>
+    {% for t in preview.topics|sort(attribute="status") %}
+    <tr>
+      <td>{{ t.status.value }}</td>
+      <td dir="auto">{{ t.data.title }}</td>
+      <td><code>{{ t.data.slug }}</code></td>
+      <td>{% for f in t.changed_fields %}{{ field_names.get(f, f) }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}

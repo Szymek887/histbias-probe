@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, errors_box with context %}
+{% block content %}
+<h1>{{ "Edit topic" if topic_id else "New topic" }}</h1>
+{{ errors_box(errors) }}
+<form method="post" action="{{ '/topics/%d/edit' % topic_id if topic_id else '/topics/new' }}">
+  {{ csrf() }}
+  {% if form.slug %}<p><small>Slug (used for import/export, can't be changed): <code>{{ form.slug }}</code></small></p>{% endif %}
+  <label>Title <input name="title" value="{{ form.title }}" required maxlength="200" dir="auto"></label>
+  <div class="row">
+    <label>Type
+      <select name="type">
+        {% for t in types %}<option value="{{ t.value }}"{% if t.value == form.type %} selected{% endif %}>{{ type_labels[t.value] }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Era
+      <select name="era" required>
+        <option value="">Choose…</option>
+        {% for e in eras %}<option value="{{ e.value }}"{% if e.value == form.era %} selected{% endif %}>{{ era_labels[e.value] }}</option>{% endfor %}
+      </select>
+    </label>
+  </div>
+  <small>Internal: one open question about one country. Criss-cross: two models from two countries answer, then comment on each other.</small>
+
+  {% include "topics/_country_fields.html" %}
+
+  <label>Context <small>(Markdown; shown in the UI and given to the judge as reference)</small>
+    <textarea name="context" rows="8" dir="auto">{{ form.context }}</textarea>
+  </label>
+  <button type="button" class="secondary outline" hx-post="/topics/_preview" hx-target="#context-preview">Preview context</button>
+  <div id="context-preview" class="md-preview" aria-live="polite"></div>
+
+  <h2>Sources</h2>
+  <div id="source-rows">
+    {% for s in form.sources %}{% with source=s, removable=true %}{% include "topics/_source_row.html" %}{% endwith %}{% endfor %}
+    {% if not form.sources %}{% with source={"label": "", "url": ""}, removable=false %}{% include "topics/_source_row.html" %}{% endwith %}{% endif %}
+  </div>
+  <button type="button" class="secondary outline" hx-get="/topics/_rows/source" hx-target="#source-rows" hx-swap="beforeend">+ Add source</button>
+
+  <h2>Prompts</h2>
+  <p><small>The first prompt is the default (normally English). Add more rows for native-language versions.</small></p>
+  <div id="prompt-rows">
+    {% for p in form.prompts %}{% with prompt=p, is_default=loop.first, removable=not loop.first %}{% include "topics/_prompt_row.html" %}{% endwith %}{% endfor %}
+  </div>
+  <button type="button" class="secondary outline" hx-get="/topics/_rows/prompt" hx-target="#prompt-rows" hx-swap="beforeend">+ Add language</button>
+
+  <p class="actions">
+    <button type="submit">{{ "Save" if topic_id else "Create topic" }}</button>
+    <a href="{{ '/topics/%d' % topic_id if topic_id else '/topics' }}">Cancel</a>
+  </p>
+</form>
+{% endblock %}
