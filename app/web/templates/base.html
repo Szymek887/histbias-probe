@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ page_title }}{% endblock %} · HistBias Probe</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='pico.classless.min.css') }}?v={{ app_version }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}?v={{ app_version }}">
+  <script src="{{ url_for('static', path='htmx.min.js') }}?v={{ app_version }}" defer></script>
+</head>
+<body hx-headers='{"X-CSRF-Token": "{{ csrf_token }}"}'>
+  <header>
+    <nav>
+      <ul>
+        <li><strong><a href="/">HistBias Probe</a></strong></li>
+      </ul>
+      <ul>
+        {% for item in nav_items %}
+        <li><a href="{{ item.href }}"{% if item.key == active_nav %} aria-current="page"{% endif %}>{{ item.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+  </header>
+  <main>
+    {% if notice %}<p role="status" class="notice">{{ notice }}</p>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer>
+    <small>HistBias Probe {{ app_version }} · local only</small>
+  </footer>
+</body>
+</html>
