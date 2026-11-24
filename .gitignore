@@ -1,0 +1,11 @@
+# runtime data (DB, encryption key)
+data/
+*.db
+secret.key
+.env
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
