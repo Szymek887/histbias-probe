@@ -1,0 +1,7 @@
+<nav class="tabs" aria-label="Run sections">
+  <ul>
+    <li><a href="/runs/{{ run.id }}"{% if tab == "items" %} aria-current="page"{% endif %}>Items</a></li>
+    <li><a href="/runs/{{ run.id }}/results"{% if tab == "results" %} aria-current="page"{% endif %}>Results</a></li>
+    <li><a href="/runs/{{ run.id }}#config">Config</a></li>
+  </ul>
+</nav>

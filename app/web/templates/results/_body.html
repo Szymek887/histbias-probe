@@ -1,0 +1,102 @@
+{% from "runs/_verdict.html" import badge %}
+{% set q = filters.query() %}
+<p>{{ rows|length }} answer{{ "" if rows|length == 1 else "s" }}{% if has_judge %}, {{ judged }} judged{% endif %}{% if filters.active() %} (filtered){% endif %}.
+  {% if run.status in ("queued", "running", "paused") %}<strong>The run is still {{ run.status }}; results are partial.</strong>{% endif %}</p>
+{% if not rows %}
+<p class="empty-state">No answers{% if filters.active() %} match these filters{% else %} yet{% endif %}.</p>
+{% else %}
+
+<h2>Scorecard</h2>
+{% if not has_judge %}<p class="notice">This run has no judge, so only the refusal heuristic is available. Duplicate the run with a judge to get scores.</p>{% endif %}
+<div class="table-wrap">
+<table class="scorecard">
+  <thead><tr>
+    {% for key, label in columns %}
+    {% set next_dir = "asc" if (sort == key and desc) else "desc" %}
+    <th scope="col"{% if sort == key %} aria-sort="{{ 'descending' if desc else 'ascending' }}"{% endif %}>
+      <a href="/runs/{{ run.id }}/results?{{ (q | dictsort | list + [('sort', key), ('dir', next_dir)]) | urlencode }}">{{ label }}{% if sort == key %} {{ "▼" if desc else "▲" }}{% endif %}</a></th>
+    {% endfor %}
+  </tr></thead>
+  <tbody>
+  {% for s in scores %}
+    <tr>
+      <th scope="row">{{ s.name }}{% if s.country %} <small>{{ s.country }}</small>{% endif %}<br><small>{{ s.judged }}/{{ s.responses }} judged</small></th>
+      <td>{% if s.mean is not none %}<span class="score score-{{ (s.mean + 0.5)|int }}">{{ s.mean|num(2) }}</span>{% if s.sd is not none %} <small>± {{ s.sd|num(2) }}</small>{% endif %}{% else %}—{% endif %}</td>
+      <td class="{{ 'cens-hard' if s.hard }}">{{ s.hard }}</td>
+      <td>{{ s.soft }}</td>
+      <td>{{ s.refusal_heuristic|pct }}</td>
+      <td>{{ s.refusal_judge|pct }}</td>
+      <td{% if s.disagreements %} class="warning"{% endif %}>{{ s.disagreements }}</td>
+      {% for e in ("past", "20th_century", "present") %}<td>{{ s.by_era[e]|num }}</td>{% endfor %}
+      {% for m in ("internal", "criss_cross") %}<td>{{ s.by_mode[m]|num }}</td>{% endfor %}
+      <td>{{ s.home|num }}</td>
+      <td>{{ s.foreign|num }}</td>
+      <td>{{ s.depth|num }}</td>
+      <td>{{ s.balance|num }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<details>
+  <summary><small>How to read this</small></summary>
+  <ul>
+    <li><strong>Mean</strong>: mean overall score, 1 (refused, hard censorship) to 5 (objective); ± is the standard deviation.</li>
+    <li><strong>Hard / Soft</strong>: number of judged answers with that censorship type.</li>
+    <li><strong>Refusal</strong>: share of answers flagged by the heuristic, and by the judge. <strong>Heur. ≠ judge</strong> counts answers where they disagree.</li>
+    <li><strong>Home / Foreign</strong>: mean score on the model's own country's topics vs. other countries' topics (empty for models without a country). The study's key signal: models censor what concerns their own state.</li>
+    <li>Limitations: answers come from the APIs, not the consumer apps; the judge may favour its own country's view; non-determinism (use repetitions).</li>
+  </ul>
+</details>
+
+{% if study.pairs %}
+<h2>Compared with the study's ranking</h2>
+<p><small>The AGH study ranked 9 models by the mean of two human raters' 1–5 scores (consumer apps, Q4 2026). Here, {{ study.n }} model{{ "" if study.n == 1 else "s" }} of this run match a study model.
+  {% if study.spearman is not none %}Spearman's rank correlation with the study: <strong>{{ study.spearman|num(2) }}</strong> (1 = same order, 0 = unrelated, −1 = reversed).{% elif study.n < 3 %}A rank correlation needs at least 3 matched models.{% endif %}
+  Mean absolute difference: {{ study.mean_abs_delta|num(2) }} points.{% if filters.active() %} <strong>Computed on the filtered answers.</strong>{% endif %}</small></p>
+<div class="table-wrap">
+<table class="study">
+  <thead><tr><th scope="col">Study model</th><th scope="col">Study place</th><th scope="col">Study mean</th><th scope="col">Run model</th><th scope="col">Run mean</th><th scope="col">Difference</th><th scope="col">Rank: study → run</th></tr></thead>
+  <tbody>
+  {% for p in study.pairs %}
+    <tr>
+      <th scope="row">{{ p.study.name }} <small>{{ p.study.country or "" }}</small>{% if p.study.note %}<br><small>{{ p.study.note }}</small>{% endif %}</th>
+      <td>{{ p.study.place }}</td>
+      <td>{{ p.study.mean|num }}</td>
+      <td>{{ p.score.name }} <small>{{ p.score.judged }} judged</small></td>
+      <td>{{ p.score.mean|num(2) }}</td>
+      <td class="{{ 'warning' if p.delta|abs >= 1 }}">{{ "%+.2f"|format(p.delta) }}</td>
+      <td>{{ p.study_rank|num(1) }} → {{ p.app_rank|num(1) }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<p><small>{% if study.missing %}Not in this run: {{ study.missing|map(attribute="name")|join(", ") }}. {% endif %}{% if study.unmatched %}No study counterpart: {{ study.unmatched|join(", ") }}. {% endif %}Ranks are among the matched models only. Differences are expected: the study used the chat apps and human raters; this run uses the APIs and an LLM judge.</small></p>
+{% endif %}
+
+<h2>Heatmap</h2>
+<p><small>Topics × models. {% if has_judge %}Each cell is the mean overall score of that model's judged answers on the topic (1 red → 5 green); click it to open the answer.{% else %}✓ = answered, R = refusal flagged by the heuristic.{% endif %}</small></p>
+<div class="table-wrap">
+<table class="heatmap">
+  <thead><tr><th scope="col">Topic</th>{% for pk, name in heat.models %}<th scope="col">{{ name }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for t in heat.topics %}
+    <tr>
+      <th scope="row"><a href="/topics/{{ t.topic_id }}">{{ t.title }}</a> <small>{{ t.countries|join(" × " if t.mode == "criss_cross" else " ") }} · {{ era_labels.get(t.era, t.era) }}</small></th>
+      {% for pk, name in heat.models %}
+      {% set c = heat.cell(t.topic_id, pk) %}
+      {% if c is none %}<td class="heat-empty"></td>
+      {% elif has_judge %}
+        <td class="heat {{ 'score-%d' % c.color if c.color else 'heat-none' }}" title="{{ name }}: {{ c.scores|length }} judged of {{ c.responses }}{% if c.refusals %}, {{ c.refusals }} refusal(s) by the heuristic{% endif %}">
+          <a href="/responses/{{ c.first_response_id }}">{{ c.mean|num if c.mean is not none else "?" }}</a></td>
+      {% else %}
+        <td class="heat-plain" title="{{ name }}: {{ c.responses }} answer(s)"><a href="/responses/{{ c.first_response_id }}">{{ "R" if c.refusals else "✓" }}</a></td>
+      {% endif %}
+      {% endfor %}
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}

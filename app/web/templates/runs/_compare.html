@@ -1,0 +1,18 @@
+{% from "runs/_verdict.html" import badge %}
+{% if compare %}
+<details open>
+  <summary><strong>Compare</strong>: the same topic answered by {{ compare|length }} other model{{ "" if compare|length == 1 else "s" }} in this run (same language, turn and repetition)</summary>
+  <div class="compare">
+    {% for r in compare %}
+    <article class="cell">
+      <header><strong>{{ r.model_name }}</strong>{% if r.model_country %} <small>{{ r.model_country }}</small>{% endif %}
+        {% if r.judgement %} · {{ badge(r.judgement) }}{% endif %}
+        {% if r.refusal_heuristic %} <span class="flag">refusal?</span>{% endif %}
+        · <a href="/responses/{{ r.response_id }}">open</a></header>
+      {% if r.answer_error %}<p class="bad">{{ r.answer_error }}</p>{% endif %}
+      {% if r.text %}<div class="answer collapsible" dir="auto">{{ r.text|markdown }}</div>{% endif %}
+    </article>
+    {% endfor %}
+  </div>
+</details>
+{% endif %}
