@@ -1,0 +1,12 @@
+<div class="row repeat-row pair-row">
+  <select name="pair_a" aria-label="Model A">
+    <option value="">Model A…</option>
+    {% for m in pair_models %}<option value="{{ m.id }}"{% if m.id == pair[0] %} selected{% endif %}>{{ m.display_name }}{% if m.country_code %} ({{ m.country_code }}){% endif %}</option>{% endfor %}
+  </select>
+  <select name="pair_b" aria-label="Model B">
+    <option value="">Model B…</option>
+    {% for m in pair_models %}<option value="{{ m.id }}"{% if m.id == pair[1] %} selected{% endif %}>{{ m.display_name }}{% if m.country_code %} ({{ m.country_code }}){% endif %}</option>{% endfor %}
+  </select>
+  <button type="button" class="secondary outline" aria-label="Remove pair"
+          hx-on:click="const f = this.form; this.closest('.repeat-row').remove(); f.dispatchEvent(new Event('change', {bubbles: true}))">✕</button>
+</div>
