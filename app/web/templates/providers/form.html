@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, errors_box, post_button with context %}
+{% block content %}
+<h1>{{ "Edit provider" if provider else "Add provider" }}</h1>
+{{ errors_box(errors) }}
+<form method="post" action="{{ '/providers/%d/edit' % provider.id if provider else '/providers/new' }}">
+  {{ csrf() }}
+  <label>Name <input name="name" value="{{ values.name or '' }}" required maxlength="100"></label>
+  {% if provider %}
+    <p><small>Type: <code>{{ provider.kind }}</code>{% if provider.origin == "preset" %} · preset{% endif %}</small></p>
+  {% else %}
+  <label>Type
+    <select name="kind">
+      {% for k in kinds %}<option value="{{ k.value }}"{% if k.value == values.kind %} selected{% endif %}>{{ k.value }}</option>{% endfor %}
+    </select>
+    <small>Any API with an OpenAI-compatible <code>/chat/completions</code> endpoint (vLLM, LM Studio, OpenRouter, …) uses <code>openai_compatible</code>.</small>
+  </label>
+  {% endif %}
+  <label>Base URL <input name="base_url" value="{{ values.base_url or '' }}" placeholder="https://api.example.com/v1" type="url"></label>
+  {% set kind = provider.kind if provider else values.kind %}
+  {% if kind == "openai_compatible" %}
+  <input type="hidden" name="flags_present" value="1">
+  {% set extra_text = values.extra or "" %}
+  <label><input type="checkbox" name="flag_supports_json_mode"{% if '"supports_json_mode": true' in extra_text %} checked{% endif %}> Supports JSON mode (<code>response_format</code>)</label>
+  <label><input type="checkbox" name="flag_no_auth"{% if '"no_auth": true' in extra_text %} checked{% endif %}> No API key needed (local server)</label>
+  {% endif %}
+  {% if kind == "gigachat" %}
+  <p class="notice"><small>GigaChat needs the Russian Ministry of Digital Development's <strong>Russian Trusted Root CA</strong> (download from <code>https://www.gosuslugi.ru/crt</code>; on Linux add the sub CA). Save it as a PEM file and put its path in <code>"ca_bundle_path"</code> below. TLS verification is never turned off.</small></p>
+  {% endif %}
+  <details{% if values.extra %} open{% endif %}>
+    <summary>Advanced settings (JSON, no secrets)</summary>
+    <textarea name="extra" rows="8" spellcheck="false" placeholder='{"auth_prefix": "Api-Key", "extra_headers": {"OpenAI-Project": "{folder_id}"}}'>{{ values.extra or "" }}</textarea>
+    <small>See <code>docs/06-providers.md</code> for the options of each adapter. Keys go in Settings → API keys, never here.</small>
+  </details>
+  <p><small>Environment override for this provider's key: <code>{{ env_var }}</code></small></p>
+  <p class="actions">
+    <button type="submit">{{ "Save" if provider else "Add provider" }}</button>
+    <a href="/models">Cancel</a>
+  </p>
+</form>
+{% if provider and provider.origin == "user" %}
+{{ post_button("/providers/%d/delete" % provider.id, "Delete provider", confirm="Delete this provider and its stored key?", secondary=True) }}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<hgroup>
+  <h1>Models</h1>
+  <p><a href="/models/new" role="button">+ Add model</a> <a href="/providers/new">+ Add provider</a> · <a href="/settings/keys">API keys</a></p>
+</hgroup>
+<p><small>Enabled models appear in the run wizard. A model is usable when it has an API model ID and its provider has a key (✅).</small></p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>On</th><th>Name</th><th>Provider</th><th>Model ID</th><th>Country</th><th>Key</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td id="toggle-{{ r.model.id }}">{% include "models/_toggle.html" %}</td>
+      <td><a href="/models/{{ r.model.id }}/edit">{{ r.model.display_name }}</a></td>
+      <td><a href="/providers/{{ r.provider.id }}/edit">{{ r.provider.name }}</a></td>
+      <td>{% if r.model.model_id %}<code>{{ r.model.model_id }}</code>{% else %}<em>(set model ID)</em>{% endif %}</td>
+      <td>{{ r.model.country_code or "—" }}</td>
+      <td>{% if r.key.source == "not_needed" %}—{% elif r.key.usable %}✅{% else %}<a href="/settings/keys/{{ r.provider.id }}" title="Add a key">❌</a>{% endif %}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="6" class="empty-state">No models yet. Run <code>histbias init</code> to load the presets, or add one.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

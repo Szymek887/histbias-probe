@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, errors_box, post_button with context %}
+{% block content %}
+<h1>{{ "Edit model" if model else "Add model" }}</h1>
+{{ errors_box(errors) }}
+<form method="post" action="{{ '/models/%d/edit' % model.id if model else '/models/new' }}">
+  {{ csrf() }}
+  <div class="row">
+    <label>Provider
+      <select name="provider_id" required>
+        <option value="">Choose…</option>
+        {% for p in providers %}<option value="{{ p.id }}"{% if p.id|string == values.provider_id|string %} selected{% endif %}>{{ p.name }} ({{ p.kind }})</option>{% endfor %}
+      </select>
+      <small><a href="/providers/new">+ new OpenAI-compatible provider</a></small>
+    </label>
+    <label>Country of origin
+      <select name="country_code">
+        <option value="">— (none)</option>
+        {% for c in countries %}<option value="{{ c.code }}"{% if c.code == values.country_code %} selected{% endif %}>{{ c.name }} ({{ c.code }})</option>{% endfor %}
+      </select>
+      <small>Used for criss-cross pairing and home-model views.</small>
+    </label>
+  </div>
+  <div class="row">
+    <label>Display name <input name="display_name" value="{{ values.display_name or '' }}" required maxlength="100"></label>
+    <label>API model ID <input name="model_id" value="{{ values.model_id or '' }}" placeholder="e.g. deepseek-chat" spellcheck="false"></label>
+  </div>
+  <div class="row">
+    <label>Temperature <input name="temperature" type="number" step="0.05" min="0" max="2" value="{{ values.temperature or '' }}" placeholder="provider default"></label>
+    <label>Max tokens <input name="max_tokens" type="number" min="1" value="{{ values.max_tokens or '' }}" placeholder="provider default"></label>
+  </div>
+  <label>System prompt <small>(the study used none)</small>
+    <textarea name="system_prompt" rows="3" dir="auto">{{ values.system_prompt or "" }}</textarea>
+  </label>
+  <label>Notes <textarea name="notes" rows="2" placeholder="e.g. API version differs from the consumer app">{{ values.notes or "" }}</textarea></label>
+  <label><input type="checkbox" name="enabled"{% if values.enabled %} checked{% endif %}> Enabled (shown in the run wizard)</label>
+  <p class="actions">
+    <button type="submit">{{ "Save" if model else "Add model" }}</button>
+    <a href="/models">Cancel</a>
+  </p>
+</form>
+
+{% if model %}
+<h2>Send test prompt</h2>
+<p><small>Uses the saved settings above and the provider's key.</small></p>
+<form hx-post="/models/{{ model.id }}/test" hx-target="#test-result" hx-disabled-elt="find button">
+  <div class="row">
+    <input name="test_prompt" value="Say hello in one short sentence." aria-label="Test prompt" dir="auto">
+    <button type="submit" class="secondary">Send test prompt</button>
+  </div>
+</form>
+<div id="test-result" aria-live="polite"></div>
+
+{{ post_button("/models/%d/delete" % model.id, "Delete model", confirm="Delete this model?", secondary=True) }}
+{% endif %}
+{% endblock %}

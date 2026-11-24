@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<hgroup>
+  <h1>Runs</h1>
+  <p><a href="/runs/new" role="button">+ New run</a></p>
+</hgroup>
+{% if not has_real_key %}
+<p class="notice">Add an API key in <a href="/settings/keys">Settings</a>, or try the Mock model.</p>
+{% endif %}
+{% if rows %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Name</th><th>Models</th><th>Topics</th><th>Judge</th><th>Items</th><th>Status</th><th>Created</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td><a href="/runs/{{ r.run.id }}">{{ r.run.name }}</a></td>
+      <td>{{ r.model_count }}</td>
+      <td>{{ r.topic_count }}</td>
+      <td>{{ r.run.config.judge.display_name if r.run.config.judge else "—" }}</td>
+      <td>{{ r.progress.total or "—" }}</td>
+      <td>{% include "runs/_status.html" %}</td>
+      <td>{{ r.run.created_at|dt }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty-state">No runs yet. <a href="/runs/new">Start one</a>: pick topics and models, and the answers are collected in the background.</p>
+{% endif %}
+{% endblock %}

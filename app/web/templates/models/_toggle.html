@@ -1,0 +1,3 @@
+<input type="checkbox" name="enabled" aria-label="Enable {{ r.model.display_name }}"{% if r.model.enabled %} checked{% endif %}{% if not r.model.model_id %} disabled title="Set the model ID first"{% endif %}
+       hx-post="/models/{{ r.model.id }}/toggle" hx-target="#toggle-{{ r.model.id }}" hx-trigger="change">
+{% if error %}<small class="bad">{{ error }}</small>{% endif %}

@@ -28,6 +28,14 @@
 | D22 | **Import preview keeps the upload in `data/imports/<random>.yaml`** until confirmed (pruned after 24 h) (M1) | Starlette limits non-file form fields to 1 MB, so the 5 MB file can't round-trip through a hidden field. The token is validated as 32 hex characters. |
 | D23 | **CSRF: double-submit cookie (`histbias_csrf`, HttpOnly, SameSite=Strict) + `Origin` check**, enforced by one app-wide dependency. Forms send `csrf_token`; HTMX sends `X-CSRF-Token` from `hx-headers` on `<body>`. A missing `Origin` is allowed (non-browser clients), but the token is always required (M1) | 07-security. Added in M1 because it is the first milestone with forms. |
 | D24 | **Topic context is rendered through the same sanitizing Markdown renderer as model output** (`app/web/markdown.py`: markdown-it with HTML off + nh3, http/https/mailto links only) (M1) | Imported YAML is untrusted too. Source URLs are restricted to http(s) at validation time because they are rendered as links. |
+| D25 | **Anthropic adapter uses raw httpx, not the `anthropic` SDK** (M2) | Same reason as D6: the exact request/response bodies are stored, and tests use `respx`. 06-providers allowed either. |
+| D26 | **No temperature to Anthropic by default; no server-side refusal fallbacks** (M2) | Current Claude models accept only default sampling and API version 2026-10-21 rejects `temperature`. A fallback model answering would invalidate a censorship measurement. |
+| D27 | **GigaChat adapter implemented in M2** (the roadmap listed only mock/openai/anthropic) (M2) | It is a preset and a study model; it reuses the OpenAI-compatible adapter plus an OAuth step (~80 lines). |
+| D28 | **Environment override names**: `HISTBIAS_KEY_<PROVIDER NAME, non-alnum → _>`, extra secret fields as `…__<FIELD>` (e.g. `HISTBIAS_KEY_YANDEX_AI_STUDIO__FOLDER_ID`) (M2) | Deterministic from the provider name; shown on the provider form. |
+| D29 | **Secrets never leave memory in clear**: `Secret` hides its value in repr; error messages and stored error bodies are scrubbed of the key and key-like values; provider `extra` rejects secret-looking setting names; base URLs may not contain credentials or a query string (M2) | 07-security "never leak tokens", including keys pasted into the wrong field or echoed back by an API. |
+| D30 | **Key hint only for keys ≥ 12 characters** (M2) | Showing the last 4 characters of a short secret reveals too much of it. |
+| D31 | **Content blocks are results**: 403 with "unsafe" (Qianfan) → `ProviderRefused`, not an auth error; `REFUSAL_FINISH_REASONS = {content_filter, refusal, blacklist}` (M2) | Found while verifying presets; needed by the M3 refusal heuristic. |
+| D32 | **The encryption key is created by `histbias init` and on app start**; if it is invalid the app still starts and the API keys page shows the problem (M2) | 07-security: "doesn't crash". |
 
 ## Open questions (decide during implementation)
 

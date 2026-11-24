@@ -1,0 +1,8 @@
+{% if error %}
+<article class="errors" role="alert">❌ {{ error }}</article>
+{% else %}
+<article>
+  <div class="md" dir="auto">{{ result.text|markdown }}</div>
+  <footer><small>finish: {{ result.finish_reason or "?" }} · {{ result.latency_ms }} ms · tokens in/out: {{ result.input_tokens or "?" }}/{{ result.output_tokens or "?" }}{% for n in result.notes %} · {{ n }}{% endfor %}</small></footer>
+</article>
+{% endif %}

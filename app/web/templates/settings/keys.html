@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "_macros.html" import post_button with context %}
+{% block content %}
+<h1>API keys</h1>
+{% if cipher_error %}
+<article class="errors" role="alert"><strong>Encryption key problem:</strong> {{ cipher_error }}. Stored keys can't be used or saved until this is fixed.</article>
+{% elif any_broken %}
+<article class="errors" role="alert">Some stored keys can't be decrypted with the current encryption key (was <code>secret.key</code> replaced or <code>HISTBIAS_SECRET_KEY</code> changed?). Re-enter those keys.</article>
+{% endif %}
+<p><small>Keys are stored encrypted in <code>{{ data_dir }}/histbias.db</code> on this computer. Back up <code>{{ data_dir }}/secret.key</code> or you will need to re-enter keys. A key in an environment variable (e.g. <code>HISTBIAS_KEY_ANTHROPIC</code>) is used instead of the stored one.</small></p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Provider</th><th>Key</th><th>Last test</th><th>Actions</th></tr></thead>
+  <tbody>
+  {% for s in statuses %}
+    <tr>
+      <td>{{ s.provider.name }}<br><small><code>{{ s.provider.kind }}</code></small></td>
+      <td>
+        {% if s.broken %}<span class="bad">can't decrypt – re-enter</span>
+        {% else %}{{ s.display }}{% endif %}
+        {% if s.source == "environment" %}<br><small><code>{{ s.env_var }}</code></small>{% endif %}
+        {% if s.missing_extras %}<br><small class="bad">missing: {{ s.missing_extras|join(", ") }}</small>{% endif %}
+      </td>
+      <td id="test-{{ s.provider.id }}">
+        {% if s.last_test_at %}{{ "✅" if s.last_test_ok else "❌" }} {{ s.last_test_at.strftime("%Y-%m-%d %H:%M") }}<br><small>{{ s.last_test_message }}</small>{% endif %}
+      </td>
+      <td class="actions">
+        {% if s.source != "none" %}
+        <button type="button" class="secondary outline" hx-post="/settings/keys/{{ s.provider.id }}/test" hx-target="#test-{{ s.provider.id }}" hx-disabled-elt="this">Test</button>
+        {% endif %}
+        {% if s.source in ("stored", "none") %}
+        <a href="/settings/keys/{{ s.provider.id }}" role="button" class="secondary">{{ "Replace" if s.source == "stored" else "Add" }}</a>
+        {% endif %}
+        {% if s.source == "stored" %}
+        {{ post_button("/settings/keys/%d/delete" % s.provider.id, "Delete", confirm="Delete the stored key for " ~ s.provider.name ~ "?", secondary=True) }}
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<p><a href="/providers/new">+ Add custom provider</a></p>
+{% endblock %}
