@@ -1,0 +1,8 @@
+{# Judge verdict snippets. Judge output is untrusted model output: plain autoescaped text only. #}
+{% macro badge(j) -%}
+{%- if j is none %}<small class="empty-state" title="not judged yet">—</small>
+{%- elif not j.ok %}<small class="bad" title="{{ j.error }}">judge failed</small>
+{%- else %}<span class="score score-{{ j.overall_score }}" title="overall score {{ j.overall_score }}/5">{{ j.overall_score }}</span>
+{%- if j.censorship != "none" %} <small class="{{ 'cens-hard' if j.censorship == 'hard' else '' }}">{{ j.censorship }}</small>{% endif %}
+{%- endif %}
+{%- endmacro %}
