@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "_macros.html" import post_button with context %}
+{% block content %}
+<hgroup>
+  <h1>{{ run.name }}</h1>
+  <p>Created {{ run.created_at|dt }}{% if run.started_at %} · started {{ run.started_at|dt }}{% endif %}{% if run.finished_at %} · finished {{ run.finished_at|dt }}{% endif %}</p>
+</hgroup>
+{% if error %}<article class="errors" role="alert">{{ error }}</article>{% endif %}
+
+{% if run.status == "draft" %}
+<p><span class="status status-draft">Draft</span>: not started yet. The plan below uses the current topics, models and keys.</p>
+{% with summary_errors=[], static=True %}{% include "runs/_summary.html" %}{% endwith %}
+<p class="actions">
+  {{ post_button("/runs/%d/start" % run.id, "Start run", confirm=("Start this run? It makes about %d calls to paid APIs, billed by the providers." % plan.paid_calls) if plan and plan.paid_calls >= confirm_paid_calls else None) }}
+  <a href="/runs/{{ run.id }}/edit">Edit</a>
+  {{ post_button("/runs/%d/delete" % run.id, "Delete draft", confirm="Delete this draft run?", secondary=True) }}
+</p>
+{% else %}
+{% with tab="items" %}{% include "runs/_tabs.html" %}{% endwith %}
+{% include "runs/_live.html" %}
+
+<details id="config">
+  <summary>Config (frozen when the run started)</summary>
+  <p><a href="/runs/new?from_run={{ run.id }}" role="button" class="secondary">Duplicate run</a>
+    <small>Opens the wizard with the same settings; the new run is planned from the current topics and models.</small></p>
+  {% set s = run.config.settings %}
+  <table>
+    <tbody>
+      <tr><th scope="row">Modes</th><td>{{ (run.config.modes or [run.config.mode])|join(", ") }}</td></tr>
+      {% if "criss_cross" in (run.config.modes or []) %}<tr><th scope="row">Criss-cross pairing</th><td>{{ "manual" if s.pairing == "manual" else "automatic by country" }}</td></tr>{% endif %}
+      <tr><th scope="row">Languages</th><td>{{ s.languages|join(", ") }}</td></tr>
+      <tr><th scope="row">Internal topics asked to</th><td>{{ "only home-country models" if s.internal_models == "home" else "all selected models" }}</td></tr>
+      <tr><th scope="row">Repetitions</th><td>{{ s.repetitions }}</td></tr>
+      <tr><th scope="row">Temperature</th><td>{{ "model default" if s.temperature is none else s.temperature }}</td></tr>
+      <tr><th scope="row">Concurrency</th><td>{{ s.concurrency }}</td></tr>
+      <tr><th scope="row">Judge</th><td>{% if run.config.judge %}{{ run.config.judge.display_name }} <code>{{ run.config.judge.model_id }}</code> ({{ run.config.judge.provider_name }}) · rubric {{ run.config.judge.rubric_version }} · temperature {{ run.config.judge.temperature }}
+        {% for w in run.config.judge.warnings %}<br><small class="warning">⚠ {{ w }}</small>{% endfor %}{% else %}none (answers only){% endif %}</td></tr>
+      <tr><th scope="row">App version</th><td>{{ run.config.app_version }}</td></tr>
+    </tbody>
+  </table>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Model</th><th>Provider</th><th>API model ID</th><th>Country</th><th>Temperature</th><th>Max tokens</th><th>System prompt</th></tr></thead>
+    <tbody>
+    {% for m in run.config.models.values() %}
+      <tr><td>{{ m.display_name }}</td><td>{{ m.provider_name }}</td><td><code>{{ m.model_id }}</code></td><td>{{ m.country_code or "—" }}</td>
+        <td>{{ "default" if m.temperature is none else m.temperature }}</td><td>{{ m.max_tokens or "default" }}</td><td>{{ "yes" if m.system_prompt else "none" }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% if run.config.skipped_topics %}<p>Skipped topics: {% for t in run.config.skipped_topics %}{{ t.title }} ({{ t.reason }}){{ ", " if not loop.last }}{% endfor %}</p>{% endif %}
+  {% if run.config.excluded_models %}<p>Models left out: {% for m in run.config.excluded_models %}{{ m.display_name }} ({{ m.reason }}){{ ", " if not loop.last }}{% endfor %}</p>{% endif %}
+  {% for note in run.config.notes %}<p><small>{{ note }}</small></p>{% endfor %}
+</details>
+{% if run.status not in ("queued", "running") %}
+<p>{{ post_button("/runs/%d/delete" % run.id, "Delete run", confirm="Delete this run and all its answers? This can't be undone.", secondary=True) }}</p>
+{% endif %}
+{% endif %}
+{% endblock %}

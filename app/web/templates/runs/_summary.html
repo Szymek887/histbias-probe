@@ -1,0 +1,36 @@
+<article class="summary" aria-live="polite">
+  {% if summary_errors %}
+  <p class="bad">{{ summary_errors|join(" ") }}</p>
+  {% elif plan %}
+  <p><strong>Summary: {{ plan.calls }} model call{{ "" if plan.calls == 1 else "s" }}</strong>
+    ({{ plan.topics|length }} topic{{ "" if plan.topics|length == 1 else "s" }},
+    {{ plan.models|length }} model{{ "" if plan.models|length == 1 else "s" }}{% if plan.settings.repetitions > 1 %}, {{ plan.settings.repetitions }} repetitions{% endif %}{% if plan.criss_cross_items %}: {{ plan.internal_items }} internal + {{ plan.criss_cross_items }} criss-cross × 4{% endif %}).
+    {% if plan.judge %}<br>+ about {{ plan.judge_calls }} judge call{{ "" if plan.judge_calls == 1 else "s" }} ({{ plan.judge.display_name }}, one per answer, more if a reply needs repair).{% else %}No judge: answers only.{% endif %}</p>
+  {% for w in plan.judge_warnings %}<p class="warning">⚠ {{ w }}</p>{% endfor %}
+  {% if plan.pairings %}
+  <details{% if plan.pairings|length <= 6 %} open{% endif %}>
+    <summary>Criss-cross pairs</summary>
+    <ul>{% for t, pairs in plan.pairings %}<li>{{ t.title }} → {% for a, b in pairs %}{{ a.display_name }} × {{ b.display_name }}{{ ", " if not loop.last }}{% endfor %}</li>{% endfor %}</ul>
+  </details>
+  {% endif %}
+  {% if plan.excluded_models %}
+  <p>Models left out: {% for m, why in plan.excluded_models %}{{ m.display_name }} ({{ why }}){{ ", " if not loop.last }}{% endfor %}</p>
+  {% endif %}
+  {% if plan.skipped_topics %}
+  <details>
+    <summary>{{ plan.skipped_topics|length }} topic{{ "" if plan.skipped_topics|length == 1 else "s" }} skipped</summary>
+    <ul>{% for t, why in plan.skipped_topics %}<li>{{ t.title }}: {{ why }}</li>{% endfor %}</ul>
+  </details>
+  {% endif %}
+  {% for note in plan.notes %}<p><small>{{ note }}</small></p>{% endfor %}
+  {% for p in plan.problems %}<p class="bad">{{ p[:1]|upper }}{{ p[1:] }}.</p>{% endfor %}
+  {% else %}
+  <p>Choose topics, models and a language to see the number of calls.</p>
+  {% endif %}
+  {% if not static %}
+  <p class="actions">
+    <button type="submit" name="action" value="start"{% if not plan or plan.problems or summary_errors %} disabled{% endif %}{% if plan and plan.paid_calls >= confirm_paid_calls %} onclick="return confirm({{ ('Start this run? It makes about %d calls to paid APIs, billed by the providers.' % plan.paid_calls)|tojson|forceescape }})"{% endif %}>Start run</button>
+    <button type="submit" name="action" value="draft" class="secondary">Save as draft</button>
+  </p>
+  {% endif %}
+</article>

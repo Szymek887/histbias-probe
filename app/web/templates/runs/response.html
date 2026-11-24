@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% from "runs/_verdict.html" import badge %}
+{% block content %}
+<p><a href="/runs/{{ run.id }}">← {{ run.name }}</a></p>
+<hgroup>
+  <h1>{{ topic.title if topic else "Response" }}</h1>
+  <p>{{ response.display_name_snapshot }} <code>{{ response.model_id_snapshot }}</code> · {{ item.language }}{% if item.repetition > 1 %} · repetition {{ item.repetition }}{% endif %} · turn {{ response.turn }}</p>
+</hgroup>
+
+{% if grid %}
+<h2>Conversation</h2>
+<p><small>Turn 1: both models answer the prompt independently. Turn 2: each gets the other's turn-1 answer and is asked what it thinks of it.</small></p>
+<div class="grid2">
+  {% for row in grid %}{% for cell in row %}
+  {% set r = cell.response %}
+  <article class="cell{% if r and r.id == response.id %} current{% endif %}">
+    <header>
+      <strong>{{ cell.label }}</strong> · {{ cell.name }} · turn {{ cell.turn }}
+      {% if r %}{% if r.refusal_detected %} <span class="flag">refusal?</span>{% endif %}
+      {% if r.id != response.id %}· <a href="/responses/{{ r.id }}">details</a>{% else %}· <em>shown below</em>{% endif %}{% endif %}
+      {% if r and run.judge_model_id %}<br>Judge: {{ badge(cell_verdicts.get(r.id)) }}{% endif %}
+    </header>
+    {% if r %}
+      {% if r.error %}<p class="bad">{{ r.error }}</p>{% endif %}
+      {% if r.text %}<div class="answer collapsible" dir="auto">{{ r.text|markdown }}</div>{% elif not r.error %}<p class="empty-state">(empty answer)</p>{% endif %}
+    {% else %}
+      <p class="empty-state">{% if item.status in ("pending", "running") %}not answered yet{% else %}not asked{% if item.error %}: {{ item.error }}{% endif %}{% endif %}</p>
+    {% endif %}
+  </article>
+  {% endfor %}{% endfor %}
+</div>
+<h2>Selected answer: {% for row in grid %}{% for cell in row %}{% if cell.response and cell.response.id == response.id %}{{ cell.label }} ({{ cell.name }}){% endif %}{% endfor %}{% endfor %}</h2>
+{% endif %}
+
+<h2>{{ "Conversation sent" if response.turn == 2 else "Prompt" }}</h2>
+{% for m in response.messages %}
+<p><small>{{ m.role }}</small></p>
+<blockquote dir="auto" class="message">{{ m.content }}</blockquote>
+{% endfor %}
+
+{% if not grid %}
+<h2>Answer</h2>
+{% if response.error %}<article class="errors" role="alert">{{ response.error }}</article>{% endif %}
+{% if response.text %}
+<div class="answer" dir="auto">{{ response.text|markdown }}</div>
+{% elif not response.error %}
+<p class="empty-state">(empty answer)</p>
+{% endif %}
+{% endif %}
+
+<table>
+  <tbody>
+    <tr><th scope="row">Refusal heuristic</th><td>{% if refusal_check.detected %}<span class="flag">refusal</span> – {{ refusal_check.reason }}{% else %}no refusal detected{% endif %}</td></tr>
+    <tr><th scope="row">Finish reason</th><td>{{ response.finish_reason or "—" }}</td></tr>
+    <tr><th scope="row">Tokens</th><td>{{ response.input_tokens if response.input_tokens is not none else "?" }} in · {{ response.output_tokens if response.output_tokens is not none else "?" }} out</td></tr>
+    <tr><th scope="row">Latency</th><td>{{ "%.2f"|format(response.latency_ms / 1000) }} s</td></tr>
+    <tr><th scope="row">Received</th><td>{{ response.created_at|dt("%Y-%m-%d %H:%M:%S") }}</td></tr>
+  </tbody>
+</table>
+{% if response.raw.notes %}<p><small>Notes: {{ response.raw.notes|join("; ") }}</small></p>{% endif %}
+<h2>Judge verdict</h2>
+{% if not run.judge_model_id %}
+<p class="empty-state">This run has no judge (answers only).</p>
+{% elif verdict is none %}
+<p class="empty-state">Not judged yet.</p>
+{% else %}
+<p>{{ run.config.judge.display_name if run.config.judge else "Judge" }} · rubric {{ verdict.rubric_version }}{% if verdict.repaired %} · <small>valid only after the “fix your JSON” retry</small>{% endif %}</p>
+{% if verdict.ok %}
+<table class="verdict">
+  <tbody>
+    <tr><th scope="row">Overall score</th><td>{{ badge(verdict) }} / 5</td></tr>
+    <tr><th scope="row">Censorship</th><td class="{{ 'cens-hard' if verdict.censorship == 'hard' else '' }}">{{ verdict.censorship }}</td></tr>
+    <tr{% if verdict.refusal != response.refusal_detected %} class="disagree"{% endif %}><th scope="row">Refusal</th>
+      <td>judge: {{ "yes" if verdict.refusal else "no" }} · heuristic: {{ "yes" if response.refusal_detected else "no" }}
+      {% if verdict.refusal != response.refusal_detected %}<br><small>⚠ The judge and the refusal heuristic disagree.</small>{% endif %}</td></tr>
+    <tr><th scope="row">Balance</th><td>{{ verdict.balance_score }} / 5</td></tr>
+    <tr><th scope="row">Depth</th><td>{{ verdict.depth_score }} / 5</td></tr>
+    <tr><th scope="row">Narrative alignment</th><td dir="auto">{{ verdict.narrative_alignment or "—" }}</td></tr>
+    <tr><th scope="row">Factual issues</th><td dir="auto">{% if verdict.factual_issues %}<ul>{% for x in verdict.factual_issues %}<li>{{ x }}</li>{% endfor %}</ul>{% else %}none{% endif %}</td></tr>
+    <tr><th scope="row">Omissions</th><td dir="auto">{% if verdict.omissions %}<ul>{% for x in verdict.omissions %}<li>{{ x }}</li>{% endfor %}</ul>{% else %}none{% endif %}</td></tr>
+    <tr><th scope="row">Rationale</th><td dir="auto">{{ verdict.rationale }}</td></tr>
+  </tbody>
+</table>
+{% else %}
+<article class="errors" role="alert">Judging failed: {{ verdict.error }}</article>
+{% endif %}
+<details>
+  <summary>Judge prompt</summary>
+  {% for m in judge_messages %}<p><small>{{ m.role }}</small></p><pre class="message"><code>{{ m.content }}</code></pre>{% endfor %}
+</details>
+<details>
+  <summary>Raw judge output</summary>
+  <pre><code>{{ verdict.raw_output }}</code></pre>
+</details>
+{% endif %}
+
+{% include "runs/_compare.html" %}
+
+<details>
+  <summary>Raw request and response bodies</summary>
+  <pre><code>{{ raw_json }}</code></pre>
+</details>
+{% endblock %}

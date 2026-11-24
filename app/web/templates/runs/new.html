@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, errors_box with context %}
+{% block content %}
+<h1>{{ "Edit draft run" if draft else "New run" }}</h1>
+{% if duplicate_of %}<p class="notice">Duplicating <a href="/runs/{{ duplicate_of.id }}">{{ duplicate_of.name }}</a>: same settings, planned again from the current topics, models and keys.</p>{% endif %}
+{{ errors_box(errors) }}
+<form id="run-form" method="post" action="/runs/new"
+      hx-post="/runs/new/summary" hx-trigger="change" hx-target="#summary" hx-sync="this:replace">
+  {{ csrf() }}
+  <input type="hidden" name="draft_id" value="{{ values.draft_id }}">
+  <label>Run name <input name="name" value="{{ values.name }}" required maxlength="200"></label>
+
+  <details open>
+    <summary><strong>1. Topics</strong></summary>
+    {% for country, rows in internal_topics|groupby("countries.0") %}
+    <fieldset class="check-group">
+      <legend><label><input type="checkbox" data-check-all="topics-{{ country }}"> <strong>{{ country }}</strong> <small>(all)</small></label></legend>
+      <div class="check-grid">
+      {% for r in rows %}
+        <label><input type="checkbox" name="topic_ids" value="{{ r.topic.id }}" data-group="topics-{{ country }}"{% if r.topic.id in values.topic_ids %} checked{% endif %}>
+          {{ r.topic.title }} <small>{{ era_labels.get(r.topic.era, r.topic.era) }}</small></label>
+      {% endfor %}
+      </div>
+    </fieldset>
+    {% else %}
+    <p class="empty-state">No internal topics. <a href="/topics/new">Add a topic</a>.</p>
+    {% endfor %}
+    {% if cc_topics %}
+    <fieldset class="check-group">
+      <legend><label><input type="checkbox" data-check-all="topics-cc"> <strong>Criss-cross</strong> <small>(all; two models from the two countries answer, then comment on each other)</small></label></legend>
+      <div class="check-grid">
+      {% for r in cc_topics %}
+        <label><input type="checkbox" name="topic_ids" value="{{ r.topic.id }}" data-group="topics-cc"{% if r.topic.id in values.topic_ids %} checked{% endif %}>
+          {{ r.topic.title }} <small>{{ r.countries|join(" × ") }}</small></label>
+      {% endfor %}
+      </div>
+    </fieldset>
+    {% endif %}
+  </details>
+
+  <details open>
+    <summary><strong>2. Models</strong></summary>
+    <div class="check-grid">
+    {% for r in model_rows %}
+      <label><input type="checkbox" name="model_ids" value="{{ r.model.id }}"{% if not r.usable %} disabled{% elif r.model.id in values.model_ids %} checked{% endif %}>
+        {{ r.model.display_name }}
+        <small>{{ r.provider.name }}{% if r.model.country_code %} · {{ r.model.country_code }}{% endif %}
+        {%- if not r.model.model_id %} · <a href="/models/{{ r.model.id }}/edit">set model ID</a>
+        {%- elif not r.usable %} · <a href="/settings/keys/{{ r.provider.id }}">no key</a>{% endif %}</small></label>
+    {% else %}
+      <p class="empty-state">No enabled models. <a href="/models">Enable a model</a> (the Mock models need no key).</p>
+    {% endfor %}
+    </div>
+    <p><small>Only enabled models are listed; models without a working key can't be selected. <a href="/models">Manage models</a></small></p>
+    <fieldset>
+      <legend>Criss-cross pairing</legend>
+      {% for value, label in pairing_choices.items() %}
+      <label><input type="radio" name="pairing" value="{{ value }}"{% if values.pairing == value %} checked{% endif %}> {{ label }}</label>
+      {% endfor %}
+      <div id="pairs">
+        {% for pair in values.pairs %}{% include "runs/_pair_row.html" %}{% endfor %}
+        {% with pair=(None, None) %}{% include "runs/_pair_row.html" %}{% endwith %}
+      </div>
+      <button type="button" class="secondary outline" hx-get="/runs/new/pair-row" hx-target="#pairs" hx-swap="beforeend">+ Add pair</button>
+      <small>Manual pairs (model A × model B) are used only with “choose pairs manually”. Both models must also be ticked above. The pairs are listed in the summary.</small>
+    </fieldset>
+    <fieldset>
+      <legend>Internal topics are asked to</legend>
+      {% for value, label in internal_model_choices.items() %}
+      <label><input type="radio" name="internal_models" value="{{ value }}"{% if values.internal_models == value %} checked{% endif %}> {{ label }}</label>
+      {% endfor %}
+    </fieldset>
+  </details>
+
+  <details open>
+    <summary><strong>3. Judge</strong></summary>
+    <label>Judge model
+      <select name="judge_model_id">
+        <option value="">No judge – collect answers only</option>
+        {% for r in judge_rows %}
+        <option value="{{ r.model.id }}"{% if not r.usable %} disabled{% elif r.model.id|string == values.judge_model_id %} selected{% endif %}>
+          {{ r.model.display_name }} ({{ r.provider.name }}{% if r.model.country_code %}, {{ r.model.country_code }}{% endif %}){% if not r.usable %} – no key{% endif %}</option>
+        {% endfor %}
+      </select>
+      <small>Scores every answer with rubric v1 (1–5, censorship none/soft/hard, balance, depth). The judge doesn't see which model wrote the answer. Pick a model that isn't tested in this run, ideally from a country the topics don't involve; warnings appear in the summary.</small>
+    </label>
+  </details>
+
+  <details open>
+    <summary><strong>4. Settings</strong></summary>
+    <fieldset>
+      <legend>Languages</legend>
+      {% for value, label in language_choices.items() %}
+      <label><input type="checkbox" name="languages" value="{{ value }}"{% if value in values.languages %} checked{% endif %}> {{ label }}</label>
+      {% endfor %}
+    </fieldset>
+    <div class="row">
+      <label>Repetitions <input type="number" name="repetitions" min="1" max="20" value="{{ values.repetitions }}"></label>
+      <label>Concurrency <input type="number" name="concurrency" min="1" max="32" value="{{ values.concurrency }}">
+        <small>Parallel calls for this run (also capped per provider and globally).</small></label>
+    </div>
+    <fieldset>
+      <legend>Temperature</legend>
+      <label><input type="radio" name="temperature_mode" value="model"{% if values.temperature_mode != "fixed" %} checked{% endif %}> Model default <small>(each model's setting, else the provider default)</small></label>
+      <label><input type="radio" name="temperature_mode" value="fixed"{% if values.temperature_mode == "fixed" %} checked{% endif %}> Fixed for all models:
+        <input type="number" name="temperature" step="0.05" min="0" max="2" value="{{ values.temperature }}" class="lang" aria-label="Temperature"></label>
+    </fieldset>
+  </details>
+
+  <div id="summary">{% with summary_errors=[] %}{% include "runs/_summary.html" %}{% endwith %}</div>
+</form>
+<script src="{{ url_for('static', path='wizard.js') }}?v={{ app_version }}" defer></script>
+{% endblock %}

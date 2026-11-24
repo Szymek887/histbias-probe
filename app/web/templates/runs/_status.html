@@ -1,0 +1,7 @@
+{# expects `r.run` and `r.progress` #}
+<span class="status status-{{ r.run.status }}">{{ r.run.status }}</span>
+{% if r.run.status in ("queued", "running", "paused") and r.progress.total %}
+  <progress value="{{ r.progress.finished }}" max="{{ r.progress.total }}" aria-label="Progress"></progress>
+  <small>{{ r.progress.percent }}%</small>
+{% endif %}
+{% if r.progress.errors %}<small class="bad">{{ r.progress.errors }} error{{ "" if r.progress.errors == 1 else "s" }}</small>{% endif %}

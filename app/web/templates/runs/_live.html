@@ -1,0 +1,45 @@
+{% from "_macros.html" import post_button with context %}
+{% from "runs/_verdict.html" import badge %}
+<section id="run-live" class="live"
+  {%- if polling %} hx-get="/runs/{{ run.id }}/progress" hx-trigger="every 2s" hx-swap="outerHTML"{% endif %}>
+  <p>
+    <span class="status status-{{ run.status }}">{{ run.status }}</span>
+    · {{ progress.answered }}/{{ progress.total }} answered
+    {%- if run.judge_model_id %} · {{ progress.judged }} judged{% endif %}
+    {%- if progress.judge_failed %} · <span class="bad">{{ progress.judge_failed }} judge failed</span>{% endif %}
+    {%- if progress.running %} · {{ progress.running }} in flight{% endif %}
+    {%- if progress.errors %} · <span class="bad">{{ progress.errors }} error{{ "" if progress.errors == 1 else "s" }}</span>{% endif %}
+    {%- if progress.skipped %} · {{ progress.skipped }} skipped{% endif %}
+  </p>
+  <progress value="{{ progress.finished }}" max="{{ progress.total or 1 }}" aria-label="Progress {{ progress.percent }}%"></progress>
+  <p class="actions">
+    {% if run.status in ("queued", "running") %}{{ post_button("/runs/%d/pause" % run.id, "Pause", secondary=True) }}{% endif %}
+    {% if run.status == "paused" %}{{ post_button("/runs/%d/resume" % run.id, "Resume") }}{% endif %}
+    {% if run.status in ("queued", "running", "paused") %}{{ post_button("/runs/%d/cancel" % run.id, "Cancel", confirm="Cancel this run? Items not yet called are skipped.", secondary=True) }}{% endif %}
+    {% if progress.failed %}{{ post_button("/runs/%d/retry" % run.id, "Retry failed") }}{% endif %}
+  </p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Topic</th><th>Mode</th><th>Model</th><th>Lang</th>{% if run.config.settings.repetitions > 1 %}<th>Rep</th>{% endif %}<th>Status</th><th>Answer</th>{% if run.judge_model_id %}<th>Score</th>{% endif %}</tr></thead>
+    <tbody>
+    {% for row in items %}
+      {% set i = row.item %}
+      <tr>
+        <td>{{ row.topic_title }}</td>
+        <td>{{ "cc" if i.mode == "criss_cross" else "int" }}</td>
+        <td>{{ row.model_name }}</td>
+        <td>{{ i.language }}</td>
+        {% if run.config.settings.repetitions > 1 %}<td>{{ i.repetition }}</td>{% endif %}
+        <td>{{ i.status }}{% if i.attempts > 1 %} <small>({{ i.attempts }} attempts)</small>{% endif %}
+          {% if i.error %}<br><small class="{{ 'bad' if i.status in ('error', 'judge_failed') else '' }}">{{ i.error|truncate(200) }}</small>{% endif %}</td>
+        <td>{% if row.first %}<a href="/responses/{{ row.first.id }}">view</a>
+          {% if row.expected > 1 %}<small>{{ row.responses|length }}/{{ row.expected }}</small>{% endif %}
+          {% if row.refusals %} <span class="flag" title="The refusal heuristic flagged {{ row.refusals }} answer(s)">refusal?{% if row.expected > 1 %} ×{{ row.refusals }}{% endif %}</span>{% endif %}
+          {% if row.expected == 1 %}<small>{{ "%.1f"|format(row.first.latency_ms / 1000) }} s</small>{% endif %}{% endif %}</td>
+        {% if run.judge_model_id %}<td>{% for v in row.verdicts %}{{ badge(v) }}{{ " / " if not loop.last }}{% endfor %}</td>{% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
