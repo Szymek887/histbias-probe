@@ -188,7 +188,7 @@ button.outline { background: transparent; }
 button:disabled, button[disabled] { opacity: .45; cursor: not-allowed; }
 button:disabled:hover { background: var(--accent); border-color: var(--accent); }
 button.secondary:disabled:hover { background: var(--surface); border-color: var(--rule-strong); }
-.actions { display: flex; flex-wrap: wrap; gap: .5rem .75rem; align-items: center; }
+.actions:not(td) { display: flex; flex-wrap: wrap; gap: .5rem .75rem; align-items: center; }
 form.inline { display: inline; margin: 0; }
 
 /* ---------- Forms ---------- */
