@@ -1,0 +1,12 @@
+# Never copy runtime data or secrets into the image
+data/
+.env
+*.db
+secret.key
+
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+tests/
