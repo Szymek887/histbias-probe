@@ -68,6 +68,14 @@ providers:
       # No Falcon Arabic model is served by any HF inference provider (checked 2026-11-24).
       - {display_name: Falcon Arabic, model_id: "", country: ARAB, notes: "Not available on the HF router; run it locally (vLLM/Ollama) and point a provider at it."}
 
+  - name: OpenRouter
+    kind: openai_compatible
+    base_url: https://openrouter.ai/api/v1
+    # The key test calls /key (401 for a bad key): /models may answer without a valid key.
+    # Pin the upstream host if needed: body_defaults: {provider: {order: [...], allow_fallbacks: false}}
+    extra: {supports_json_mode: true, key_check_path: /key}
+    models: []  # add models in the UI with OpenRouter IDs, "<vendor>/<model>" as listed on openrouter.ai/models
+
   - name: Local Ollama
     kind: openai_compatible
     base_url: http://localhost:11434/v1

@@ -10,6 +10,11 @@ Hugging Face router, Ollama, vLLM, ...). Provider `extra` options:
 - `body_defaults`: extra JSON fields merged into every chat request body
 - `max_tokens_field`: name of the output-limit field (default `max_tokens`; xAI wants
   `max_completion_tokens`)
+- `key_check_path`: a path (e.g. OpenRouter's `/key`) that `test_connection` calls to check
+  the key, for providers whose `/models` list is public and so proves nothing about the key
+
+Errors reported inside an HTTP 200 body (`error`, or `choices[0].error`, as OpenRouter does)
+are mapped like HTTP errors.
 """
 
 from typing import Any
@@ -20,6 +25,7 @@ from app.providers.base import (
     HttpAdapter,
     ProviderAuthError,
     ProviderError,
+    raise_for_body_error,
     raise_for_status,
     response_json,
 )
@@ -72,8 +78,10 @@ class OpenAICompatibleProvider(HttpAdapter):
         data = response_json(response)
         choices = data.get("choices") or []
         if not choices:
+            raise_for_body_error(data.get("error"), self.name, self.secret)
             raise ProviderError(f"{self.name}: response has no choices", response.status_code, data)
         choice = choices[0] or {}
+        raise_for_body_error(choice.get("error"), self.name, self.secret)
         message = choice.get("message") or {}
         content = message.get("content")
         if isinstance(content, list):
@@ -105,6 +113,11 @@ class OpenAICompatibleProvider(HttpAdapter):
 
     async def test_connection(self, model_id: str | None = None) -> tuple[bool, str]:
         try:
+            if path := self.extra.get("key_check_path"):
+                response, _ = await self._send(
+                    "GET", f"{self.base_url}/{str(path).lstrip('/')}", headers=await self._request_headers()
+                )
+                raise_for_status(response, self.name, self.secret)
             models = await self.list_models()
             if models is not None:
                 return True, f"OK – {len(models)} models available"

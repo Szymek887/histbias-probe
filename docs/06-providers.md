@@ -4,7 +4,7 @@ All models are reached through **4 adapter kinds**. Anything else that offers an
 
 | Adapter kind | Covers |
 | :--- | :--- |
-| `openai_compatible` | DeepSeek, Mistral, xAI (Grok), OpenAI, Yandex AI Studio, Baidu Qianfan v2, Hugging Face router, Ollama, vLLM, LM Studio |
+| `openai_compatible` | DeepSeek, Mistral, xAI (Grok), OpenAI, OpenRouter, Yandex AI Studio, Baidu Qianfan v2, Hugging Face router, Ollama, vLLM, LM Studio |
 | `anthropic` | Claude (Messages API) |
 | `gigachat` | GigaChat (OAuth token exchange before chat calls) |
 | `mock` | Demo and tests. Returns canned or echo answers, needs no key. |
@@ -24,9 +24,10 @@ Verified against official provider documentation on **2026-11-24** (M2). Model I
 | Grok | US | openai_compatible | `https://api.x.ai/v1` | `Authorization: Bearer` | `grok-4.7` | `/chat/completions` is labelled "legacy" by xAI but works; `max_tokens` is deprecated, so the preset sets `max_tokens_field: max_completion_tokens`. |
 | Claude | US | anthropic | `https://api.anthropic.com` | `x-api-key` + `anthropic-version: 2023-06-01` | `claude-sonnet-5-5` | See the anthropic adapter notes below (temperature, refusals, no fallbacks). |
 | Falcon (Arabic) | ARAB (UAE) | openai_compatible | local vLLM / Ollama | none | — | **Not available on the Hugging Face router** (no inference provider serves any tiiuae model, checked 2026-11-24). The Hugging Face preset is kept for other models (`org/model[:provider]`). |
+| *(any, via OpenRouter)* | per model | openai_compatible | `https://openrouter.ai/api/v1` | `Authorization: Bearer sk-or-v1-…` | none (add models in the UI as `<vendor>/<model>`) | Gateway to many vendors' models with one key. `extra.key_check_path: /key` makes the key test call `GET /key`. Moderation blocks are **403** with "moderation"/"flagged" (a refusal, not an auth error); errors during generation can arrive as **HTTP 200** with an `error` object. OpenRouter picks an upstream host per call and may fall back to another one; to fix it, set `body_defaults: {provider: {order: ["<host>"], allow_fallbacks: false}}` on the provider. Set each model's country by hand. |
 | **Control group** (open weights / uncensored) | — | openai_compatible | local Ollama / vLLM | none | — | The study planned this but never ran it. |
 
-Sources: api-docs.deepseek.com (chat, models, JSON mode, updates); cloud.baidu.com/doc/qianfan-api; aistudio.yandex.ru/docs/en/ai-studio; developers.sber.ru/docs/ru/gigachat; docs.mistral.ai; docs.x.ai; huggingface.co/docs/inference-providers; docs.ollama.com/api/openai-compatibility; platform.claude.com/docs (versioning, migration-2026-10-21, handling-stop-reasons).
+Sources: api-docs.deepseek.com (chat, models, JSON mode, updates); openrouter.ai/docs (quickstart, API overview, errors, limits, provider routing; read 2026-11-25); cloud.baidu.com/doc/qianfan-api; aistudio.yandex.ru/docs/en/ai-studio; developers.sber.ru/docs/ru/gigachat; docs.mistral.ai; docs.x.ai; huggingface.co/docs/inference-providers; docs.ollama.com/api/openai-compatibility; platform.claude.com/docs (versioning, migration-2026-10-21, handling-stop-reasons).
 
 **Country of origin:** the seed bank uses `ARAB` for "Arab states" topics. Falcon (UAE) should get `country_code: ARAB` so automatic criss-cross pairing works. Users can define finer codes later.
 
@@ -39,7 +40,8 @@ Sources: api-docs.deepseek.com (chat, models, JSON mode, updates); cloud.baidu.c
 - JSON mode: `response_format: {"type": "json_object"}` only if the provider supports it, through the provider `extra.supports_json_mode` flag. Otherwise the app relies on prompt instructions and parsing.
 - Usage tokens come from `usage.prompt_tokens` and `usage.completion_tokens` when present.
 - Auth header defaults to `Authorization: Bearer {key}`. It can be overridden with `extra.auth_header` and `extra.auth_prefix`, e.g. Yandex `Api-Key`. `extra.no_auth` sends no header.
-- Other `extra` options: `secret_extra_fields` (encrypted extra secrets such as `folder_id`, usable as `{folder_id}` in the model ID and in `extra_headers`), `extra_headers`, `body_defaults` (merged into every request body), and `max_tokens_field`.
+- Other `extra` options: `secret_extra_fields` (encrypted extra secrets such as `folder_id`, usable as `{folder_id}` in the model ID and in `extra_headers`), `extra_headers`, `body_defaults` (merged into every request body), `max_tokens_field`, and `key_check_path` (an endpoint that `test_connection` calls first to verify the key).
+- An `error` object in an HTTP 200 body (top level with no `choices`, or `choices[0].error`) is mapped like the HTTP status in its `code`; without a valid code it counts as transient.
 - Content parts (a `content` list) are reduced to their `text` parts.
 - `test_connection`: `GET {base_url}/models` if available, otherwise a 1-token chat call.
 

@@ -109,7 +109,10 @@ _REFUSAL_HINTS = (
 
 
 # Narrow on purpose: a 403 is normally an auth/permission error.
-_BLOCK_403_HINTS = ("unsafe", "content_filter", "sensitive content")
+# OpenRouter: moderation flags ("…requires moderation… flagged…", `content_policy_violation`).
+_BLOCK_403_HINTS = (
+    "unsafe", "content_filter", "sensitive content", "moderation", "flagged", "content_policy_violation",
+)  # fmt: skip
 
 # finish_reason values that mean the provider blocked or refused the content (a result,
 # not an error). Used by the refusal heuristic: OpenAI-style, Anthropic, GigaChat.
@@ -173,6 +176,22 @@ def raise_for_status(response: httpx.Response, provider: str, secret: Secret | N
     if code in (400, 422, 451) and any(h in lowered for h in _REFUSAL_HINTS):
         raise ProviderRefused(f"{provider}: content blocked ({code}). {detail}", code, raw)
     raise ProviderError(f"{provider}: {code} {response.reason_phrase}. {detail}", code, raw)
+
+
+def raise_for_body_error(error: Any, provider: str, secret: Secret | None = None) -> None:
+    """Some gateways (OpenRouter) report errors inside an HTTP 200 body, as a top-level
+    `error` or `choices[0].error`. Map them like the matching HTTP status; unknown codes
+    count as transient (the upstream model failed mid-generation)."""
+    if not error:
+        return
+    err = error if isinstance(error, dict) else {"message": str(error)}
+    try:
+        code = int(err.get("code"))
+    except (TypeError, ValueError):
+        code = 502
+    if not 400 <= code <= 599:
+        code = 502
+    raise_for_status(httpx.Response(code, json={"error": err}), provider, secret)
 
 
 class HttpAdapter:

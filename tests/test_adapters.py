@@ -369,3 +369,62 @@ async def test_gigachat_tls_failure_gives_ca_hint():
     with pytest.raises(ProviderError, match="Russian Trusted Root CA") as e:
         await p.chat(req())
     assert KEY not in str(e.value)
+
+
+# ── OpenRouter (openai_compatible preset) ────────────────────────────────────
+
+OR = "https://openrouter.ai/api/v1"
+OR_EXTRA = {"supports_json_mode": True, "key_check_path": "/key"}
+
+
+@respx.mock
+async def test_openrouter_key_check_uses_key_endpoint():
+    key = respx.get(f"{OR}/key").mock(return_value=httpx.Response(200, json={"data": {"label": "x"}}))
+    respx.get(f"{OR}/models").mock(return_value=httpx.Response(200, json={"data": [{"id": "a/b"}]}))
+    p = OpenAICompatibleProvider(OR, Secret(KEY), OR_EXTRA)
+    assert await p.test_connection() == (True, "OK – 1 models available")
+    assert key.calls.last.request.headers["authorization"] == f"Bearer {KEY}"
+
+    # /models is public, so a bad key must fail on /key, not pass on /models.
+    respx.get(f"{OR}/key").mock(
+        return_value=httpx.Response(401, json={"error": {"code": 401, "message": "User not found."}})
+    )
+    ok, msg = await p.test_connection()
+    assert not ok and "401" in msg
+
+
+@respx.mock
+async def test_openrouter_moderation_403_is_a_refusal():
+    body = {
+        "error": {
+            "code": 403,
+            "message": "openai/gpt-x requires moderation on OpenAI. Your input was flagged for \"violence\".",
+            "metadata": {"reasons": ["violence"], "flagged_input": "...", "provider_name": "OpenAI"},
+        }
+    }
+    respx.post(f"{OR}/chat/completions").mock(return_value=httpx.Response(403, json=body))
+    p = OpenAICompatibleProvider(OR, Secret(KEY), OR_EXTRA)
+    with pytest.raises(ProviderRefused):
+        await p.chat(req())
+
+
+@pytest.mark.parametrize(
+    ("body", "exc"),
+    [
+        ({"error": {"code": 502, "message": "upstream died"}}, ProviderTransient),
+        ({"error": {"code": 429, "message": "slow down"}}, ProviderRateLimit),
+        ({"error": {"code": 402, "message": "insufficient credits"}}, ProviderError),
+        ({"error": {"message": "no code"}}, ProviderTransient),
+        (
+            {"choices": [{"message": {"content": "partial"}, "finish_reason": "error",
+                          "error": {"code": 500, "message": "provider error"}}]},
+            ProviderTransient,
+        ),
+    ],
+)
+@respx.mock
+async def test_errors_inside_http_200_are_mapped(body, exc):
+    respx.post(f"{OR}/chat/completions").mock(return_value=httpx.Response(200, json=body))
+    p = OpenAICompatibleProvider(OR, Secret(KEY), OR_EXTRA)
+    with pytest.raises(exc):
+        await p.chat(req())
