@@ -1,19 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
-<hgroup>
-  <h1>Topics</h1>
-  <p>
-    <a href="/topics/new" role="button">+ New topic</a>
-    <a href="/topics/import">Import</a> ·
-    <a href="/topics/export">Export all</a> ·
+<header class="page-head">
+  <div>
+    <h1>Topics</h1>
+    <p class="meta">The question bank. Tick topics to start a run with them or to export them.</p>
+  </div>
+  <p class="page-actions">
     <a href="/countries">Countries</a>
+    <a href="/topics/import" role="button" class="secondary">Import</a>
+    <a href="/topics/export" role="button" class="secondary">Export all</a>
+    <a href="/topics/new" role="button">New topic</a>
   </p>
-</hgroup>
+</header>
 
 <form id="topic-filters" method="get" action="/topics"
       hx-get="/topics" hx-target="#topic-table" hx-push-url="true"
       hx-trigger="input delay:300ms, change">
-  <div class="row">
+  <div class="filters">
     <input type="search" name="q" value="{{ filters.q }}" placeholder="Search title or slug" aria-label="Search">
     <select name="country" aria-label="Country">
       <option value="">All countries</option>
@@ -27,14 +30,14 @@
       <option value="">All types</option>
       {% for t in types %}<option value="{{ t.value }}"{% if t.value == filters.type %} selected{% endif %}>{{ type_labels[t.value] }}</option>{% endfor %}
     </select>
+    <label><input type="checkbox" name="archived" value="true"{% if filters.archived %} checked{% endif %}> Show archived topics instead</label>
   </div>
-  <label><input type="checkbox" name="archived" value="true"{% if filters.archived %} checked{% endif %}> Show archived topics instead</label>
   <noscript><button type="submit">Filter</button></noscript>
 </form>
 
 <form method="get" id="topic-selection">
   <div id="topic-table">{% include "topics/_table.html" %}</div>
-  <p>
+  <p class="actions">
     <button type="submit" formaction="/runs/new">Start run with selected</button>
     <button type="submit" formaction="/topics/export" class="secondary">Export selected</button>
   </p>

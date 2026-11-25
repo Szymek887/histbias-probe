@@ -1,1 +1,1 @@
-{{ "✅" if ok else "❌" }} just now<br><small>{{ message }}</small>
+<span class="status {{ 'status-completed' if ok else 'status-failed' }}">{{ "OK" if ok else "Failed" }}</span> <small>just now</small><br><small>{{ message }}</small>

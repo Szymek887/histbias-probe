@@ -8,7 +8,7 @@
 | Package manager | `uv` | Fast, lockfile, `uv run` |
 | Web framework | FastAPI | Async (many parallel LLM calls), simple routing |
 | Templates | Jinja2 + **HTMX** | Server-rendered UI with no JS build step. HTMX handles forms, partial reloads, and run-progress polling. |
-| CSS | Pico.css (vendored file, classless) | Clean look without writing CSS |
+| CSS | Hand-written `app.css` + vendored fonts (Source Serif 4, Public Sans) | Readable dense tables and long answers; light/dark from the OS (D73) |
 | Charts | Chart.js (vendored) or plain HTML table heatmap | Scorecard and heatmap |
 | ORM | SQLModel (SQLAlchemy 2) | Typed models shared with Pydantic validation |
 | DB | SQLite (`data/histbias.db`) | Local, single file, zero setup |
@@ -75,7 +75,7 @@ histbias-probe/
 │   └── web/
 │       ├── routes/          # topics.py, models.py, settings.py, runs.py, results.py
 │       ├── templates/
-│       └── static/          # pico.min.css, htmx.min.js, chart.min.js, app.css
+│       └── static/          # app.css, fonts/, htmx.min.js, wizard.js
 ├── seed/
 │   ├── topics.yaml
 │   └── providers.yaml

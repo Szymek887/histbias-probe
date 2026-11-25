@@ -2,9 +2,10 @@
 {% from "runs/_verdict.html" import badge %}
 <section id="run-live" class="live"
   {%- if polling %} hx-get="/runs/{{ run.id }}/progress" hx-trigger="every 2s" hx-swap="outerHTML"{% endif %}>
-  <p>
-    <span class="status status-{{ run.status }}">{{ run.status }}</span>
-    · {{ progress.answered }}/{{ progress.total }} answered
+  <div class="strip">
+  <span class="status status-{{ run.status }}">{{ run.status }}</span>
+  <p class="tally">
+    {{ progress.answered }}/{{ progress.total }} answered
     {%- if run.judge_model_id %} · {{ progress.judged }} judged{% endif %}
     {%- if progress.judge_failed %} · <span class="bad">{{ progress.judge_failed }} judge failed</span>{% endif %}
     {%- if progress.running %} · {{ progress.running }} in flight{% endif %}
@@ -18,6 +19,7 @@
     {% if run.status in ("queued", "running", "paused") %}{{ post_button("/runs/%d/cancel" % run.id, "Cancel", confirm="Cancel this run? Items not yet called are skipped.", secondary=True) }}{% endif %}
     {% if progress.failed %}{{ post_button("/runs/%d/retry" % run.id, "Retry failed") }}{% endif %}
   </p>
+  </div>
   <div class="table-wrap">
   <table>
     <thead><tr><th>Topic</th><th>Mode</th><th>Model</th><th>Lang</th>{% if run.config.settings.repetitions > 1 %}<th>Rep</th>{% endif %}<th>Status</th><th>Answer</th>{% if run.judge_model_id %}<th>Score</th>{% endif %}</tr></thead>
@@ -25,14 +27,14 @@
     {% for row in items %}
       {% set i = row.item %}
       <tr>
-        <td>{{ row.topic_title }}</td>
-        <td>{{ "cc" if i.mode == "criss_cross" else "int" }}</td>
+        <th scope="row">{{ row.topic_title }}</th>
+        <td>{{ "Criss-cross" if i.mode == "criss_cross" else "Internal" }}</td>
         <td>{{ row.model_name }}</td>
         <td>{{ i.language }}</td>
         {% if run.config.settings.repetitions > 1 %}<td>{{ i.repetition }}</td>{% endif %}
-        <td>{{ i.status }}{% if i.attempts > 1 %} <small>({{ i.attempts }} attempts)</small>{% endif %}
+        <td><span class="status status-{{ i.status }}">{{ i.status|replace("_", " ") }}</span>{% if i.attempts > 1 %} <small>({{ i.attempts }} attempts)</small>{% endif %}
           {% if i.error %}<br><small class="{{ 'bad' if i.status in ('error', 'judge_failed') else '' }}">{{ i.error|truncate(200) }}</small>{% endif %}</td>
-        <td>{% if row.first %}<a href="/responses/{{ row.first.id }}">view</a>
+        <td>{% if row.first %}<a href="/responses/{{ row.first.id }}">Read</a>
           {% if row.expected > 1 %}<small>{{ row.responses|length }}/{{ row.expected }}</small>{% endif %}
           {% if row.refusals %} <span class="flag" title="The refusal heuristic flagged {{ row.refusals }} answer(s)">refusal?{% if row.expected > 1 %} ×{{ row.refusals }}{% endif %}</span>{% endif %}
           {% if row.expected == 1 %}<small>{{ "%.1f"|format(row.first.latency_ms / 1000) }} s</small>{% endif %}{% endif %}</td>

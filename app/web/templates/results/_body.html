@@ -1,6 +1,6 @@
 {% from "runs/_verdict.html" import badge %}
 {% set q = filters.query() %}
-<p>{{ rows|length }} answer{{ "" if rows|length == 1 else "s" }}{% if has_judge %}, {{ judged }} judged{% endif %}{% if filters.active() %} (filtered){% endif %}.
+<p class="count">{{ rows|length }} answer{{ "" if rows|length == 1 else "s" }}{% if has_judge %}, {{ judged }} judged{% endif %}{% if filters.active() %} (filtered){% endif %}.
   {% if run.status in ("queued", "running", "paused") %}<strong>The run is still {{ run.status }}; results are partial.</strong>{% endif %}</p>
 {% if not rows %}
 <p class="empty-state">No answers{% if filters.active() %} match these filters{% else %} yet{% endif %}.</p>
@@ -26,7 +26,7 @@
       <td>{{ s.soft }}</td>
       <td>{{ s.refusal_heuristic|pct }}</td>
       <td>{{ s.refusal_judge|pct }}</td>
-      <td{% if s.disagreements %} class="warning"{% endif %}>{{ s.disagreements }}</td>
+      <td{% if s.disagreements %} class="warning" title="The heuristic and the judge disagree on refusal"{% endif %}>{{ s.disagreements }}</td>
       {% for e in ("past", "20th_century", "present") %}<td>{{ s.by_era[e]|num }}</td>{% endfor %}
       {% for m in ("internal", "criss_cross") %}<td>{{ s.by_mode[m]|num }}</td>{% endfor %}
       <td>{{ s.home|num }}</td>
@@ -76,6 +76,7 @@
 {% endif %}
 
 <h2>Heatmap</h2>
+{% if has_judge %}<p class="legend" aria-hidden="true">Refused <span class="score score-1">1</span><span class="score score-2">2</span><span class="score score-3">3</span><span class="score score-4">4</span><span class="score score-5">5</span> Objective</p>{% endif %}
 <p><small>Topics × models. {% if has_judge %}Each cell is the mean overall score of that model's judged answers on the topic (1 red → 5 green); click it to open the answer.{% else %}✓ = answered, R = refusal flagged by the heuristic.{% endif %}</small></p>
 <div class="table-wrap">
 <table class="heatmap">

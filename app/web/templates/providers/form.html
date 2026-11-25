@@ -3,7 +3,7 @@
 {% block content %}
 <h1>{{ "Edit provider" if provider else "Add provider" }}</h1>
 {{ errors_box(errors) }}
-<form method="post" action="{{ '/providers/%d/edit' % provider.id if provider else '/providers/new' }}">
+<form class="narrow" method="post" action="{{ '/providers/%d/edit' % provider.id if provider else '/providers/new' }}">
   {{ csrf() }}
   <label>Name <input name="name" value="{{ values.name or '' }}" required maxlength="100"></label>
   {% if provider %}

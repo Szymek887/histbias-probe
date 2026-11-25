@@ -4,15 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ page_title }}{% endblock %} · HistBias Probe</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='pico.classless.min.css') }}?v={{ app_version }}">
+  <link rel="preload" href="{{ url_for('static', path='fonts/public-sans-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ url_for('static', path='fonts/source-serif-4-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}?v={{ app_version }}">
   <script src="{{ url_for('static', path='htmx.min.js') }}?v={{ app_version }}" defer></script>
 </head>
 <body hx-headers='{"X-CSRF-Token": "{{ csrf_token }}"}'>
-  <header>
-    <nav>
+  <header class="topbar">
+    <nav aria-label="Main">
       <ul>
-        <li><strong><a href="/">HistBias Probe</a></strong></li>
+        <li><a class="brand" href="/" aria-label="HistBias Probe, home">HistBias <span class="brand-bar">Probe</span></a></li>
       </ul>
       <ul>
         {% for item in nav_items %}
@@ -25,8 +26,8 @@
     {% if notice %}<p role="status" class="notice">{{ notice }}</p>{% endif %}
     {% block content %}{% endblock %}
   </main>
-  <footer>
-    <small>HistBias Probe {{ app_version }} · local only</small>
+  <footer class="site">
+    <small>HistBias Probe {{ app_version }} · runs locally on this computer</small>
   </footer>
 </body>
 </html>

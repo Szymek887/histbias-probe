@@ -15,7 +15,7 @@ HistBias Probe: a local web app that runs a bank of historical and political que
 - Decision log and open questions: `docs/decisions.md`. Add new decisions there.
 
 ## Conventions
-- Python 3.12, `uv`, FastAPI, SQLModel, Alembic, Jinja2 + HTMX, Pico.css. No JS build step; vendor static libs into `app/web/static/`.
+- Python 3.12, `uv`, FastAPI, SQLModel, Alembic, Jinja2 + HTMX, hand-written `app/web/static/app.css` (no CSS framework, see D73). No JS build step; vendor static libs into `app/web/static/`.
 - Async I/O for all provider calls (`httpx.AsyncClient`).
 - Business logic goes in `app/services/` and `app/engine/`. Routes stay thin.
 - Every schema change gets an Alembic migration.

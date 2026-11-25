@@ -3,7 +3,7 @@
 {% block content %}
 <h1>{{ "Edit topic" if topic_id else "New topic" }}</h1>
 {{ errors_box(errors) }}
-<form method="post" action="{{ '/topics/%d/edit' % topic_id if topic_id else '/topics/new' }}">
+<form class="narrow" method="post" action="{{ '/topics/%d/edit' % topic_id if topic_id else '/topics/new' }}">
   {{ csrf() }}
   {% if form.slug %}<p><small>Slug (used for import/export, can't be changed): <code>{{ form.slug }}</code></small></p>{% endif %}
   <label>Title <input name="title" value="{{ form.title }}" required maxlength="200" dir="auto"></label>

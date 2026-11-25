@@ -60,7 +60,7 @@ def test_add_test_replace_delete_key_never_leaks(app_client, session, migrated, 
         )
         r = post(app_client, f"/settings/keys/{deepseek}/test")
         assert route.calls.last.request.headers["authorization"] == f"Bearer {KEY}"
-    assert "✅" in r.text and "1 models available" in r.text
+    assert "status-completed" in r.text and "1 models available" in r.text
 
     # The real-key flow for a model: enable DeepSeek and send a test prompt.
     m = session.exec(select(LlmModel).where(LlmModel.display_name == "DeepSeek")).one()

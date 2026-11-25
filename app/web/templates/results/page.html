@@ -1,13 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-<hgroup>
-  <h1>{{ run.name }}</h1>
-  <p><span class="status status-{{ run.status }}">{{ run.status }}</span>
-    · judge: {{ run.config.judge.display_name if run.config.judge else "none" }}{% if run.config.judge %} (rubric {{ run.config.judge.rubric_version }}){% endif %}</p>
-</hgroup>
+<header class="page-head">
+  <div>
+    <a class="back" href="/">← All runs</a>
+    <h1>{{ run.name }}</h1>
+    <p class="meta"><span class="status status-{{ run.status }}">{{ run.status }}</span>
+      &ensp;Judge: {{ run.config.judge.display_name if run.config.judge else "none" }}{% if run.config.judge %} (rubric {{ run.config.judge.rubric_version }}){% endif %}</p>
+  </div>
+  <p class="page-actions">
+    <a href="/runs/{{ run.id }}/export.csv" role="button" class="secondary" title="One row per judgement, whole run">Export CSV</a>
+    <a href="/runs/{{ run.id }}/export.json" role="button" class="secondary" title="Full run with prompts, answers and raw bodies">Export JSON</a>
+  </p>
+</header>
 {% with tab="results" %}{% include "runs/_tabs.html" %}{% endwith %}
 
-<form method="get" action="/runs/{{ run.id }}/results" class="row"
+<form method="get" action="/runs/{{ run.id }}/results" class="filters"
       hx-get="/runs/{{ run.id }}/results" hx-target="#results-body" hx-push-url="true" hx-trigger="change">
   <select name="country" aria-label="Topic country">
     <option value="">All countries</option>
@@ -24,11 +31,7 @@
   <input type="hidden" name="sort" value="{{ sort }}"><input type="hidden" name="dir" value="{{ 'desc' if desc else 'asc' }}">
   <noscript><button type="submit">Filter</button></noscript>
 </form>
-<p class="actions">
-  <a href="/runs/{{ run.id }}/export.csv" role="button" class="secondary">Export CSV</a>
-  <a href="/runs/{{ run.id }}/export.json" role="button" class="secondary">Export JSON</a>
-  <small>Exports contain the whole run (all filters off): CSV has one row per judgement, JSON the full run with prompts, answers and raw bodies.</small>
-</p>
+<p><small>Filters apply to this page only. Exports contain the whole run: CSV has one row per judgement, JSON the full run with prompts, answers and raw bodies.</small></p>
 
 <div id="results-body">{% include "results/_body.html" %}</div>
 {% endblock %}

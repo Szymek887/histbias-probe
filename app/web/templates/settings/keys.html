@@ -1,13 +1,19 @@
 {% extends "base.html" %}
 {% from "_macros.html" import post_button with context %}
 {% block content %}
-<h1>API keys</h1>
+<header class="page-head">
+  <div>
+    <h1>API keys</h1>
+    <p class="meta">Keys are encrypted and stay on this computer. Only the last 4 characters are ever shown.</p>
+  </div>
+  <p class="page-actions"><a href="/providers/new" role="button" class="secondary">Add custom provider</a></p>
+</header>
 {% if cipher_error %}
 <article class="errors" role="alert"><strong>Encryption key problem:</strong> {{ cipher_error }}. Stored keys can't be used or saved until this is fixed.</article>
 {% elif any_broken %}
 <article class="errors" role="alert">Some stored keys can't be decrypted with the current encryption key (was <code>secret.key</code> replaced or <code>HISTBIAS_SECRET_KEY</code> changed?). Re-enter those keys.</article>
 {% endif %}
-<p><small>Keys are stored encrypted in <code>{{ data_dir }}/histbias.db</code> on this computer. Back up <code>{{ data_dir }}/secret.key</code> or you will need to re-enter keys. A key in an environment variable (e.g. <code>HISTBIAS_KEY_ANTHROPIC</code>) is used instead of the stored one.</small></p>
+<p class="lede"><small>Keys are stored encrypted in <code>{{ data_dir }}/histbias.db</code> on this computer. Back up <code>{{ data_dir }}/secret.key</code> or you will need to re-enter keys. A key in an environment variable (e.g. <code>HISTBIAS_KEY_ANTHROPIC</code>) is used instead of the stored one.</small></p>
 
 <div class="table-wrap">
 <table>
@@ -15,7 +21,7 @@
   <tbody>
   {% for s in statuses %}
     <tr>
-      <td>{{ s.provider.name }}<br><small><code>{{ s.provider.kind }}</code></small></td>
+      <th scope="row">{{ s.provider.name }}<br><small><code>{{ s.provider.kind }}</code></small></th>
       <td>
         {% if s.broken %}<span class="bad">can't decrypt – re-enter</span>
         {% else %}{{ s.display }}{% endif %}
@@ -23,7 +29,7 @@
         {% if s.missing_extras %}<br><small class="bad">missing: {{ s.missing_extras|join(", ") }}</small>{% endif %}
       </td>
       <td id="test-{{ s.provider.id }}">
-        {% if s.last_test_at %}{{ "✅" if s.last_test_ok else "❌" }} {{ s.last_test_at.strftime("%Y-%m-%d %H:%M") }}<br><small>{{ s.last_test_message }}</small>{% endif %}
+        {% if s.last_test_at %}<span class="status {{ 'status-completed' if s.last_test_ok else 'status-failed' }}">{{ "OK" if s.last_test_ok else "Failed" }}</span> <small>{{ s.last_test_at.strftime("%Y-%m-%d %H:%M") }}</small><br><small>{{ s.last_test_message }}</small>{% endif %}
       </td>
       <td class="actions">
         {% if s.source != "none" %}
@@ -41,5 +47,4 @@
   </tbody>
 </table>
 </div>
-<p><a href="/providers/new">+ Add custom provider</a></p>
 {% endblock %}

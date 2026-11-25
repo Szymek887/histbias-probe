@@ -3,6 +3,6 @@
 {%- if j is none %}<small class="empty-state" title="not judged yet">—</small>
 {%- elif not j.ok %}<small class="bad" title="{{ j.error }}">judge failed</small>
 {%- else %}<span class="score score-{{ j.overall_score }}" title="overall score {{ j.overall_score }}/5">{{ j.overall_score }}</span>
-{%- if j.censorship != "none" %} <small class="{{ 'cens-hard' if j.censorship == 'hard' else '' }}">{{ j.censorship }}</small>{% endif %}
+{%- if j.censorship != "none" %} <span class="cens cens-{{ 'hard' if j.censorship == 'hard' else 'soft' }}" title="{{ j.censorship }} censorship">{{ j.censorship }}</span>{% endif %}
 {%- endif %}
 {%- endmacro %}

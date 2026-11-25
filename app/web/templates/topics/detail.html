@@ -1,17 +1,18 @@
 {% extends "base.html" %}
 {% from "_macros.html" import post_button with context %}
 {% block content %}
-<hgroup>
+<header class="page-head">
+  <div>
+  <a class="back" href="/topics">← All topics</a>
   <h1 dir="auto">{{ topic.title }}{% if topic.archived %} <small>(archived)</small>{% endif %}</h1>
-  <p>
+  <p class="meta">
     {{ type_labels[data.type.value] }} ·
     {% for code in data.countries %}{{ countries[code].name if code in countries else code }} ({{ code }}){% if not loop.last %} × {% endif %}{% endfor %} ·
     {{ era_labels[data.era.value] }} ·
     <code>{{ topic.slug }}</code> · {{ topic.origin }}
   </p>
-</hgroup>
-
-<p class="actions">
+  </div>
+<p class="page-actions">
   <a href="/topics/{{ topic.id }}/edit" role="button">Edit</a>
   {% if topic.archived %}
     {{ post_button("/topics/%d/restore" % topic.id, "Restore", secondary=True) }}
@@ -23,6 +24,7 @@
   {% endif %}
   <a href="/topics/export?ids={{ topic.id }}">Export YAML</a>
 </p>
+</header>
 
 <h2>Context</h2>
 {% if data.context %}
@@ -39,6 +41,7 @@
 {% endif %}
 
 <h2>Prompts</h2>
+<div class="table-wrap">
 <table>
   <thead><tr><th>Lang</th><th>Prompt</th>{% if data.type.value == "criss_cross" %}<th>Follow-up (turn 2)</th>{% endif %}</tr></thead>
   <tbody>
@@ -51,10 +54,11 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 
 <h2>Results history</h2>
 {% if runs %}
-<ul>{% for r in runs %}<li><a href="/runs/{{ r.id }}">{{ r.name }}</a> · {{ r.status }} · {{ r.created_at.strftime("%Y-%m-%d") }}</li>{% endfor %}</ul>
+<ul class="history">{% for r in runs %}<li><a href="/runs/{{ r.id }}">{{ r.name }}</a> <span class="status status-{{ r.status }}">{{ r.status }}</span> <small>{{ r.created_at.strftime("%Y-%m-%d") }}</small></li>{% endfor %}</ul>
 {% else %}
 <p class="empty-state">No runs have used this topic yet.</p>
 {% endif %}

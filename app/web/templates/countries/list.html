@@ -1,10 +1,14 @@
 {% extends "base.html" %}
 {% from "_macros.html" import csrf, errors_box with context %}
 {% block content %}
-<hgroup>
-  <h1>Countries</h1>
-  <p>Countries group topics and models. The native language is the default language for native-language prompts.</p>
-</hgroup>
+<header class="page-head">
+  <div>
+    <a class="back" href="/topics">← Topics</a>
+    <h1>Countries</h1>
+    <p class="meta">Countries group topics and models. The native language is the default language for native-language prompts.</p>
+  </div>
+</header>
+<div class="table-wrap">
 <table>
   <thead><tr><th>Code</th><th>Name</th><th>Native language</th><th>Topics</th><th></th></tr></thead>
   <tbody>
@@ -19,10 +23,11 @@
     {% endfor %}
   </tbody>
 </table>
+</div>
 
 <h2>Add country</h2>
 {{ errors_box(errors) }}
-<form method="post" action="/countries">
+<form method="post" action="/countries" class="narrow">
   {{ csrf() }}
   <div class="row">
     <label>Code <input name="code" value="{{ values.get('code', '') }}" placeholder="UA" required maxlength="10"></label>
@@ -31,5 +36,4 @@
   </div>
   <button type="submit">Add country</button>
 </form>
-<p><a href="/topics">Back to topics</a></p>
 {% endblock %}

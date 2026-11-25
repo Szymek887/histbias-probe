@@ -4,7 +4,7 @@
 <h1>Import topics</h1>
 {{ errors_box([error] if error else []) }}
 <p>Upload a topic YAML file (the same format as <a href="/topics/export">Export</a> and <code>seed/topics.yaml</code>, max 5 MB). You'll see a preview before anything changes.</p>
-<form method="post" action="/topics/import" enctype="multipart/form-data">
+<form class="narrow" method="post" action="/topics/import" enctype="multipart/form-data">
   {{ csrf() }}
   <input type="file" name="file" accept=".yaml,.yml,application/x-yaml,text/yaml" required aria-label="YAML file">
   <button type="submit">Preview import</button>

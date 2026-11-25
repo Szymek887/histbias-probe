@@ -3,7 +3,7 @@
 {% block content %}
 <h1>{{ "Edit model" if model else "Add model" }}</h1>
 {{ errors_box(errors) }}
-<form method="post" action="{{ '/models/%d/edit' % model.id if model else '/models/new' }}">
+<form class="narrow" method="post" action="{{ '/models/%d/edit' % model.id if model else '/models/new' }}">
   {{ csrf() }}
   <div class="row">
     <label>Provider

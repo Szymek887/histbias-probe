@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
-<hgroup>
-  <h1>Runs</h1>
-  <p><a href="/runs/new" role="button">+ New run</a></p>
-</hgroup>
+<header class="page-head">
+  <div>
+    <h1>Runs</h1>
+    <p class="meta">Each run asks a set of topics to a set of models, then a judge scores the answers.</p>
+  </div>
+  <p class="page-actions"><a href="/runs/new" role="button">New run</a></p>
+</header>
 {% if not has_real_key %}
 <p class="notice">Add an API key in <a href="/settings/keys">Settings</a>, or try the Mock model.</p>
 {% endif %}
@@ -14,7 +17,7 @@
   <tbody>
   {% for r in rows %}
     <tr>
-      <td><a href="/runs/{{ r.run.id }}">{{ r.run.name }}</a></td>
+      <th scope="row"><a href="/runs/{{ r.run.id }}">{{ r.run.name }}</a></th>
       <td>{{ r.model_count }}</td>
       <td>{{ r.topic_count }}</td>
       <td>{{ r.run.config.judge.display_name if r.run.config.judge else "—" }}</td>

@@ -1,10 +1,13 @@
 {% extends "base.html" %}
 {% from "_macros.html" import post_button with context %}
 {% block content %}
-<hgroup>
+<header class="page-head">
+  <div>
+  <a class="back" href="/">← All runs</a>
   <h1>{{ run.name }}</h1>
-  <p>Created {{ run.created_at|dt }}{% if run.started_at %} · started {{ run.started_at|dt }}{% endif %}{% if run.finished_at %} · finished {{ run.finished_at|dt }}{% endif %}</p>
-</hgroup>
+  <p class="meta">Created {{ run.created_at|dt }}{% if run.started_at %} · started {{ run.started_at|dt }}{% endif %}{% if run.finished_at %} · finished {{ run.finished_at|dt }}{% endif %}</p>
+  </div>
+</header>
 {% if error %}<article class="errors" role="alert">{{ error }}</article>{% endif %}
 
 {% if run.status == "draft" %}
@@ -21,10 +24,10 @@
 
 <details id="config">
   <summary>Config (frozen when the run started)</summary>
-  <p><a href="/runs/new?from_run={{ run.id }}" role="button" class="secondary">Duplicate run</a>
+  <p class="actions"><a href="/runs/new?from_run={{ run.id }}" role="button" class="secondary">Duplicate run</a>
     <small>Opens the wizard with the same settings; the new run is planned from the current topics and models.</small></p>
   {% set s = run.config.settings %}
-  <table>
+  <table class="kv">
     <tbody>
       <tr><th scope="row">Modes</th><td>{{ (run.config.modes or [run.config.mode])|join(", ") }}</td></tr>
       {% if "criss_cross" in (run.config.modes or []) %}<tr><th scope="row">Criss-cross pairing</th><td>{{ "manual" if s.pairing == "manual" else "automatic by country" }}</td></tr>{% endif %}

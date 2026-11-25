@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 {% from "runs/_verdict.html" import badge %}
 {% block content %}
-<p><a href="/runs/{{ run.id }}">← {{ run.name }}</a></p>
-<hgroup>
-  <h1>{{ topic.title if topic else "Response" }}</h1>
-  <p>{{ response.display_name_snapshot }} <code>{{ response.model_id_snapshot }}</code> · {{ item.language }}{% if item.repetition > 1 %} · repetition {{ item.repetition }}{% endif %} · turn {{ response.turn }}</p>
-</hgroup>
+<header class="page-head">
+  <div>
+  <a class="back" href="/runs/{{ run.id }}">← {{ run.name }}</a>
+  <h1 dir="auto">{{ topic.title if topic else "Response" }}</h1>
+  <p class="meta">{{ response.display_name_snapshot }} <code>{{ response.model_id_snapshot }}</code> · {{ item.language }}{% if item.repetition > 1 %} · repetition {{ item.repetition }}{% endif %} · turn {{ response.turn }}</p>
+  </div>
+</header>
 
 {% if grid %}
 <h2>Conversation</h2>
@@ -34,7 +36,7 @@
 
 <h2>{{ "Conversation sent" if response.turn == 2 else "Prompt" }}</h2>
 {% for m in response.messages %}
-<p><small>{{ m.role }}</small></p>
+<span class="role">{{ m.role }}</span>
 <blockquote dir="auto" class="message">{{ m.content }}</blockquote>
 {% endfor %}
 
@@ -48,7 +50,7 @@
 {% endif %}
 {% endif %}
 
-<table>
+<table class="kv">
   <tbody>
     <tr><th scope="row">Refusal heuristic</th><td>{% if refusal_check.detected %}<span class="flag">refusal</span> – {{ refusal_check.reason }}{% else %}no refusal detected{% endif %}</td></tr>
     <tr><th scope="row">Finish reason</th><td>{{ response.finish_reason or "—" }}</td></tr>
@@ -66,10 +68,10 @@
 {% else %}
 <p>{{ run.config.judge.display_name if run.config.judge else "Judge" }} · rubric {{ verdict.rubric_version }}{% if verdict.repaired %} · <small>valid only after the “fix your JSON” retry</small>{% endif %}</p>
 {% if verdict.ok %}
-<table class="verdict">
+<table class="verdict kv">
   <tbody>
     <tr><th scope="row">Overall score</th><td>{{ badge(verdict) }} / 5</td></tr>
-    <tr><th scope="row">Censorship</th><td class="{{ 'cens-hard' if verdict.censorship == 'hard' else '' }}">{{ verdict.censorship }}</td></tr>
+    <tr><th scope="row">Censorship</th><td>{% if verdict.censorship == "none" %}none{% else %}<span class="cens cens-{{ 'hard' if verdict.censorship == 'hard' else 'soft' }}">{{ verdict.censorship }}</span>{% endif %}</td></tr>
     <tr{% if verdict.refusal != response.refusal_detected %} class="disagree"{% endif %}><th scope="row">Refusal</th>
       <td>judge: {{ "yes" if verdict.refusal else "no" }} · heuristic: {{ "yes" if response.refusal_detected else "no" }}
       {% if verdict.refusal != response.refusal_detected %}<br><small>⚠ The judge and the refusal heuristic disagree.</small>{% endif %}</td></tr>
@@ -86,7 +88,7 @@
 {% endif %}
 <details>
   <summary>Judge prompt</summary>
-  {% for m in judge_messages %}<p><small>{{ m.role }}</small></p><pre class="message"><code>{{ m.content }}</code></pre>{% endfor %}
+  {% for m in judge_messages %}<span class="role">{{ m.role }}</span><pre class="message"><code>{{ m.content }}</code></pre>{% endfor %}
 </details>
 <details>
   <summary>Raw judge output</summary>

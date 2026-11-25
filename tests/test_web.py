@@ -21,7 +21,7 @@ def test_settings_redirects_to_keys(client):
     assert r.headers["location"] == "/settings/keys"
 
 
-@pytest.mark.parametrize("path", ["pico.classless.min.css", "htmx.min.js", "app.css"])
+@pytest.mark.parametrize("path", ["app.css", "htmx.min.js", "fonts/public-sans-latin-wght-normal.woff2"])
 def test_static_assets_vendored(client, path):
     r = client.get(f"/static/{path}")
     assert r.status_code == 200
@@ -30,7 +30,7 @@ def test_static_assets_vendored(client, path):
 
 def test_base_layout_loads_assets(client):
     html = client.get("/").text
-    assert "/static/pico.classless.min.css" in html
+    assert "/static/app.css" in html
     assert "/static/htmx.min.js" in html
     # No external CDN references: the app works offline.
     assert "cdn." not in html

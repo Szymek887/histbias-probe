@@ -1,4 +1,4 @@
-<p><small>{{ rows|length }} topic{{ "" if rows|length == 1 else "s" }}{% if filters.archived %} (archived){% endif %}</small></p>
+<p class="count">{{ rows|length }} topic{{ "" if rows|length == 1 else "s" }}{% if filters.archived %} (archived){% endif %}</p>
 {% if rows %}
 <div class="table-wrap">
 <table>
@@ -9,17 +9,17 @@
       <th scope="col">Countries</th>
       <th scope="col">Era</th>
       <th scope="col">Type</th>
-      <th scope="col">Langs</th>
+      <th scope="col">Languages</th>
     </tr>
   </thead>
   <tbody>
     {% for r in rows %}
     <tr>
       <td><input type="checkbox" name="ids" value="{{ r.topic.id }}" form="topic-selection" aria-label="Select {{ r.topic.title }}"></td>
-      <td><a href="/topics/{{ r.topic.id }}">{{ r.topic.title }}</a></td>
+      <th scope="row"><a href="/topics/{{ r.topic.id }}">{{ r.topic.title }}</a></th>
       <td>{{ r.countries|join(" · ") }}</td>
       <td>{{ era_labels.get(r.topic.era, r.topic.era) }}</td>
-      <td>{{ "cc" if r.topic.type == "criss_cross" else "int" }}</td>
+      <td>{{ type_labels.get(r.topic.type, r.topic.type) }}</td>
       <td>{{ r.languages|join(", ") }}</td>
     </tr>
     {% endfor %}

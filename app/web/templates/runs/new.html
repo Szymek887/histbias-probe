@@ -1,14 +1,19 @@
 {% extends "base.html" %}
 {% from "_macros.html" import csrf, errors_box with context %}
 {% block content %}
-<h1>{{ "Edit draft run" if draft else "New run" }}</h1>
+<header class="page-head">
+  <div>
+    <h1>{{ "Edit draft run" if draft else "New run" }}</h1>
+    <p class="meta">Choose topics, models and a judge. The summary at the bottom shows how many API calls the run makes.</p>
+  </div>
+</header>
 {% if duplicate_of %}<p class="notice">Duplicating <a href="/runs/{{ duplicate_of.id }}">{{ duplicate_of.name }}</a>: same settings, planned again from the current topics, models and keys.</p>{% endif %}
 {{ errors_box(errors) }}
-<form id="run-form" method="post" action="/runs/new"
+<form id="run-form" class="form-steps" method="post" action="/runs/new"
       hx-post="/runs/new/summary" hx-trigger="change" hx-target="#summary" hx-sync="this:replace">
   {{ csrf() }}
   <input type="hidden" name="draft_id" value="{{ values.draft_id }}">
-  <label>Run name <input name="name" value="{{ values.name }}" required maxlength="200"></label>
+  <label class="narrow">Run name <input name="name" value="{{ values.name }}" required maxlength="200"></label>
 
   <details open>
     <summary><strong>1. Topics</strong></summary>
@@ -61,7 +66,7 @@
         {% for pair in values.pairs %}{% include "runs/_pair_row.html" %}{% endfor %}
         {% with pair=(None, None) %}{% include "runs/_pair_row.html" %}{% endwith %}
       </div>
-      <button type="button" class="secondary outline" hx-get="/runs/new/pair-row" hx-target="#pairs" hx-swap="beforeend">+ Add pair</button>
+      <p><button type="button" class="secondary outline" hx-get="/runs/new/pair-row" hx-target="#pairs" hx-swap="beforeend">Add pair</button></p>
       <small>Manual pairs (model A × model B) are used only with “choose pairs manually”. Both models must also be ticked above. The pairs are listed in the summary.</small>
     </fieldset>
     <fieldset>

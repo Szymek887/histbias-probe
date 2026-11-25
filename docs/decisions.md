@@ -76,6 +76,7 @@
 | D70 | **Static file URLs carry `?v=<app version>`; version set to 0.9.0** (1.0.0 after the demo with real models) (M7) | Browsers cached the old CSS after an update. |
 | D71 | **Security checklist (`docs/security-checklist.md`) maps each rule of 07-security to the test that verifies it**; the optional pre-commit secret scan is deferred until the project is a git repository (M7) | Makes the M7 "checklist verified" item checkable and repeatable. |
 | D72 | **The M7 demo with the real study models was not run during implementation** (no API keys available); the pipeline was dry-run with mock models, and `docs/demo.md` holds the procedure and the results table to fill in (M7) | Real calls need the user's keys and cost money. |
+| D73 | **Pico.css removed; replaced by a hand-written `app.css` ("archive reading room" design) with vendored Source Serif 4 and Public Sans fonts** (supersedes D16) | Pico's classless sizes and spacing made dense tables and long answers hard to read, and overriding it fought the framework. One stylesheet on top of the existing semantic markup, light and dark themes from the OS setting, still no build step and no CDN. |
 
 ## Open questions (decide during implementation)
 
